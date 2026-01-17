@@ -2482,7 +2482,23 @@ pub fn dump_undefined_struct(
                 }
             }
         }
-        DefinedStruct::StringProperty(_) => (),
+        DefinedStruct::StringProperty(data) => {
+            println!("String Property");
+            if let Some(string_property_id) = data.string_property_id() {
+                println!(
+                    "\tString Property ID: {}",
+                    dmi_string_property_id(string_property_id)
+                );
+            }
+            if let Some(string_property_value) =
+                dmidecode_string_val(&data.string_property_value())
+            {
+                println!("\tString Property Value: {}", string_property_value);
+            }
+            if let Some(parent_handle) = data.parent_handle() {
+                println!("\tParent Handle: {:#06X}", *parent_handle);
+            }
+        }
         DefinedStruct::Inactive(_) => {
             println!("Inactive");
         }

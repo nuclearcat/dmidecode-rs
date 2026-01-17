@@ -51,6 +51,7 @@ pub fn dmi_smbios_structure_type(code: u8) -> String {
         43 => "TPM Device",
         44 => "Processor Additional Information",
         45 => "Firmware Inventory Information",
+        46 => "String Property",
         _ => "",
     };
 
@@ -409,6 +410,15 @@ pub fn dmi_firmware_inventory_characteristics(
     }
     if characteristics.write_protect() {
         println!("\t\tWrite-protect");
+    }
+}
+
+pub fn dmi_string_property_id(string_property_id: StringPropertyIdData) -> String {
+    match string_property_id.value {
+        StringPropertyId::UefiDevicePath => "UEFI Device Path".to_string(),
+        StringPropertyId::VendorSpecific => "Vendor Specific".to_string(),
+        StringPropertyId::OemSpecific => "OEM Specific".to_string(),
+        StringPropertyId::None => format!("{} ({:#06X})", OUT_OF_SPEC, string_property_id.raw),
     }
 }
 
