@@ -234,6 +234,23 @@ pub fn dump_undefined_struct(
                 }
             }
 
+            if let Some(bios_vendor_reserved_characteristics) =
+                data.bios_vendor_reserved_characteristics()
+            {
+                println!(
+                    "\tBIOS Vendor Reserved Characteristics: {:#06X}",
+                    bios_vendor_reserved_characteristics
+                );
+            }
+            if let Some(system_vendor_reserved_characteristics) =
+                data.system_vendor_reserved_characteristics()
+            {
+                println!(
+                    "\tSystem Vendor Reserved Characteristics: {:#06X}",
+                    system_vendor_reserved_characteristics
+                );
+            }
+
             match (
                 data.system_bios_major_release(),
                 data.system_bios_minor_release(),
@@ -1073,6 +1090,34 @@ pub fn dump_undefined_struct(
                     device_function_number & 0x07,
                     slot_peer_group.1.data_bus_width().unwrap_or_default()
                 );
+            }
+            if let Some(slot_information) = data.slot_information() {
+                match data.system_slot_type() {
+                    Some(system_slot_type) => {
+                        if let Some(info) =
+                            dmi_slot_information(slot_information, &system_slot_type)
+                        {
+                            println!("\tSlot Information: {}", info);
+                        }
+                    }
+                    None => {
+                        if slot_information != 0 {
+                            println!("\tSlot Information: 0x{:02X}", slot_information);
+                        }
+                    }
+                }
+            }
+            if let Some(slot_physical_width) = data.slot_physical_width() {
+                println!(
+                    "\tPhysical Width: {}",
+                    dmi_slot_bus_width(&slot_physical_width)
+                );
+            }
+            if let Some(slot_pitch) = data.slot_pitch() {
+                println!("\tSlot Pitch: {}", dmi_slot_pitch(slot_pitch));
+            }
+            if let Some(slot_height) = data.slot_height() {
+                println!("\tSlot Height: {}", dmi_slot_height(slot_height));
             }
         }
         DefinedStruct::OnBoardDeviceInformation(data) => {
@@ -2331,6 +2376,20 @@ pub fn dump_undefined_struct(
                         }
                     }
                 } else {
+                    if let Some(interface_type_specific_data_length) =
+                        data.interface_type_specific_data_length()
+                    {
+                        println!(
+                            "\tInterface Type Specific Data Length: {}",
+                            interface_type_specific_data_length
+                        );
+                    }
+                    if let Some(number_of_protocol_records) = data.number_of_protocol_records() {
+                        println!(
+                            "\tNumber Of Protocol Records: {}",
+                            number_of_protocol_records
+                        );
+                    }
                     dmi_parse_controller_structure(&data);
                 }
             }

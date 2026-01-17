@@ -2073,6 +2073,41 @@ pub fn dmi_slot_length(slot_length: &SlotLengthData) -> String {
         false => print.to_string(),
     }
 }
+pub fn dmi_slot_height(slot_height: SlotHeightData) -> String {
+    match slot_height.value {
+        SlotHeight::NotApplicable => "Not applicable".to_string(),
+        SlotHeight::Other => OTHER.to_string(),
+        SlotHeight::Unknown => UNKNOWN.to_string(),
+        SlotHeight::FullHeight => "Full height".to_string(),
+        SlotHeight::LowProfile => "Low-profile".to_string(),
+        SlotHeight::None => format!("{} ({})", OUT_OF_SPEC, slot_height.raw),
+    }
+}
+pub fn dmi_slot_pitch(slot_pitch: u16) -> String {
+    if slot_pitch == 0 {
+        return UNKNOWN.to_string();
+    }
+    let whole = slot_pitch / 100;
+    let frac = slot_pitch % 100;
+    match frac {
+        0 => format!("{} mm", whole),
+        _ => format!("{}.{:02} mm", whole, frac),
+    }
+}
+pub fn dmi_slot_information(
+    slot_information: u8,
+    system_slot_type: &SystemSlotTypeData,
+) -> Option<String> {
+    if slot_information == 0 {
+        return None;
+    }
+    match system_slot_type.value {
+        SystemSlotType::PciExpress(PciExpressGeneration::PCIExpressGen6, _) => {
+            Some(format!("PCI Express Gen {}", slot_information))
+        }
+        _ => Some(format!("0x{:02X}", slot_information)),
+    }
+}
 pub fn dmi_slot_characteristics(
     attr: &str,
     characteristics1: &Option<SystemSlotCharacteristics1>,
