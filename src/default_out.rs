@@ -2417,7 +2417,71 @@ pub fn dump_undefined_struct(
                 }
             }
         }
-        DefinedStruct::FirmwareInventoryInformation(_) => (),
+        DefinedStruct::FirmwareInventoryInformation(data) => {
+            println!("Firmware Inventory Information");
+            if let Some(component_name) = dmidecode_string_val(&data.firmware_component_name()) {
+                println!("\tComponent Name: {}", component_name);
+            }
+            if let Some(version) = dmidecode_string_val(&data.firmware_version()) {
+                println!("\tVersion: {}", version);
+            }
+            if let Some(version_format) = data.version_format() {
+                println!(
+                    "\tVersion Format: {}",
+                    dmi_firmware_version_format(version_format)
+                );
+            }
+            if let Some(firmware_id) = dmidecode_string_val(&data.firmware_id()) {
+                println!("\tID: {}", firmware_id);
+            }
+            if let Some(firmware_id_format) = data.firmware_id_format() {
+                println!(
+                    "\tID Format: {}",
+                    dmi_firmware_id_format(firmware_id_format)
+                );
+            }
+            if let Some(release_date) = dmidecode_string_val(&data.release_date()) {
+                println!("\tRelease Date: {}", release_date);
+            }
+            if let Some(manufacturer) = dmidecode_string_val(&data.manufacturer()) {
+                println!("\tManufacturer: {}", manufacturer);
+            }
+            if let Some(lowest_supported_version) =
+                dmidecode_string_val(&data.lowest_supported_firmware_version())
+            {
+                println!(
+                    "\tLowest Supported Version: {}",
+                    lowest_supported_version
+                );
+            }
+            if let Some(image_size) = data.image_size() {
+                match image_size {
+                    FirmwareImageSize::Unknown => println!("\tImage Size: Unknown"),
+                    FirmwareImageSize::Bytes(bytes) => {
+                        dmi_print_memory_size("Image Size", bytes, false)
+                    }
+                }
+            }
+            if let Some(characteristics) = data.characteristics() {
+                println!("\tCharacteristics:");
+                dmi_firmware_inventory_characteristics(&characteristics);
+            }
+            if let Some(state) = data.state() {
+                println!("\tState: {}", dmi_firmware_inventory_state(state));
+            }
+            if let Some(number_of_associated_components) = data.number_of_associated_components() {
+                println!(
+                    "\tAssociated Components: {}",
+                    number_of_associated_components
+                );
+                if number_of_associated_components > 0 {
+                    println!("\tAssociated Component Handles:");
+                    for handle in data.associated_component_handle_iterator() {
+                        println!("\t\t{:#06X}", *handle);
+                    }
+                }
+            }
+        }
         DefinedStruct::StringProperty(_) => (),
         DefinedStruct::Inactive(_) => {
             println!("Inactive");

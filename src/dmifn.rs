@@ -50,6 +50,7 @@ pub fn dmi_smbios_structure_type(code: u8) -> String {
         42 => "Management Controller Host Interface",
         43 => "TPM Device",
         44 => "Processor Additional Information",
+        45 => "Firmware Inventory Information",
         _ => "",
     };
 
@@ -363,6 +364,51 @@ pub fn dmi_processor_architecture_type(
         0x09 => "32-bit LoongArch (LoongArch32)".to_string(),
         0x0A => "64-bit LoongArch (LoongArch64)".to_string(),
         _ => format!("{} ({})", OUT_OF_SPEC, processor_architecture.raw),
+    }
+}
+
+pub fn dmi_firmware_version_format(version_format: VersionFormatData) -> String {
+    match version_format.value {
+        VersionFormat::FreeForm => "Free-form".to_string(),
+        VersionFormat::MajorMinor => "Major/Minor".to_string(),
+        VersionFormat::HexidecimalString32 => "Hexadecimal string (32-bit)".to_string(),
+        VersionFormat::HexidecimalString64 => "Hexadecimal string (64-bit)".to_string(),
+        VersionFormat::VendorOemSpecific => "Vendor/OEM-specific".to_string(),
+        VersionFormat::None => format!("{} ({})", OUT_OF_SPEC, version_format.raw),
+    }
+}
+
+pub fn dmi_firmware_id_format(firmware_id_format: FirmwareIdFormatData) -> String {
+    match firmware_id_format.value {
+        FirmwareIdFormat::FreeForm => "Free-form".to_string(),
+        FirmwareIdFormat::UefiGuid => "UEFI GUID".to_string(),
+        FirmwareIdFormat::VendorOemSpecific => "Vendor/OEM-specific".to_string(),
+        FirmwareIdFormat::None => format!("{} ({})", OUT_OF_SPEC, firmware_id_format.raw),
+    }
+}
+
+pub fn dmi_firmware_inventory_state(state: FirmwareInventoryStateInformationData) -> String {
+    match state.value {
+        FirmwareInventoryStateInformation::Other => OTHER.to_string(),
+        FirmwareInventoryStateInformation::Unknown => UNKNOWN.to_string(),
+        FirmwareInventoryStateInformation::Disabled => "Disabled".to_string(),
+        FirmwareInventoryStateInformation::Enabled => "Enabled".to_string(),
+        FirmwareInventoryStateInformation::Absent => "Absent".to_string(),
+        FirmwareInventoryStateInformation::StandbyOffline => "Standby Offline".to_string(),
+        FirmwareInventoryStateInformation::StandbySpare => "Standby Spare".to_string(),
+        FirmwareInventoryStateInformation::UnavailableOffline => "Unavailable Offline".to_string(),
+        FirmwareInventoryStateInformation::None => format!("{} ({})", OUT_OF_SPEC, state.raw),
+    }
+}
+
+pub fn dmi_firmware_inventory_characteristics(
+    characteristics: &FirmwareInventoryCharacteristics,
+) {
+    if characteristics.updatable() {
+        println!("\t\tUpdatable");
+    }
+    if characteristics.write_protect() {
+        println!("\t\tWrite-protect");
     }
 }
 
