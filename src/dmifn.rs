@@ -2824,7 +2824,7 @@ pub fn dmi_ipmi_base_address(
                 AddressBit::One => address_stripped | 1,
             };
 
-            println!("{:#18X} ({})", actual_address, memory_type);
+            println!("{:#X} ({})", actual_address, memory_type);
         }
     }
 }
