@@ -2588,6 +2588,12 @@ pub fn dump_undefined_struct(
         DefinedStruct::Undefined(data) => {
             if data.parts().header.struct_type() >= 128 {
                 println!("OEM-specific");
+                if !data.parts().fields.is_empty() {
+                    println!(
+                        "\tRaw Data: {}",
+                        format_hex_bytes(&data.parts().fields)
+                    );
+                }
             } else {
                 println!("{}", UNKNOWN);
             }
@@ -2616,4 +2622,15 @@ fn dmidecode_string_val_with_index(s: &SMBiosString, index: Option<u8>) -> Optio
         },
         other => other,
     }
+}
+
+fn format_hex_bytes(bytes: &[u8]) -> String {
+    let mut out = String::new();
+    for (i, byte) in bytes.iter().enumerate() {
+        if i > 0 {
+            out.push(' ');
+        }
+        out.push_str(&format!("{:02X}", byte));
+    }
+    out
 }
