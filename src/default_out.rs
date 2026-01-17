@@ -2386,8 +2386,36 @@ pub fn dump_undefined_struct(
                 println!("\tOEM-specific Information: {:#10X}", oem_defined);
             }
         }
-        DefinedStruct::ProcessorAdditionalInformation(_) => {
+        DefinedStruct::ProcessorAdditionalInformation(data) => {
             println!("Processor Additional Information");
+            if let Some(referenced_handle) = data.referenced_handle() {
+                println!("\tReferenced Handle: {:#06X}", *referenced_handle);
+            }
+            if let Some(processor_specific_block) = data.processor_specific_block() {
+                println!("\tProcessor Specific Block:");
+                println!(
+                    "\t\tBlock Length: {}",
+                    processor_specific_block.block_length()
+                );
+                println!(
+                    "\t\tProcessor Architecture: {}",
+                    dmi_processor_architecture_type(processor_specific_block.processor_type())
+                );
+                let processor_specific_data = processor_specific_block.processor_specific_data();
+                let data_len = processor_specific_block.block_length() as usize;
+                let processor_specific_data = if processor_specific_data.len() > data_len {
+                    &processor_specific_data[..data_len]
+                } else {
+                    processor_specific_data
+                };
+                if !processor_specific_data.is_empty() {
+                    print!("\t\tProcessor Specific Data:");
+                    for byte in processor_specific_data {
+                        print!(" 0x{:02X}", byte);
+                    }
+                    println!();
+                }
+            }
         }
         DefinedStruct::FirmwareInventoryInformation(_) => (),
         DefinedStruct::StringProperty(_) => (),

@@ -49,6 +49,7 @@ pub fn dmi_smbios_structure_type(code: u8) -> String {
         41 => "Onboard Device",
         42 => "Management Controller Host Interface",
         43 => "TPM Device",
+        44 => "Processor Additional Information",
         _ => "",
     };
 
@@ -343,6 +344,25 @@ pub fn dmi_processor_family(processor_family: ProcessorFamily, raw: u16) -> Stri
     match print == "" {
         true => format!("{} ({})", OUT_OF_SPEC, raw),
         false => print.to_string(),
+    }
+}
+
+pub fn dmi_processor_architecture_type(
+    processor_architecture: ProcessorArchitectureTypeData,
+) -> String {
+    match processor_architecture.raw {
+        0x00 => "Reserved".to_string(),
+        0x01 => "IA32 (x86)".to_string(),
+        0x02 => "x64 (x86-64, Intel64, AMD64, EM64T)".to_string(),
+        0x03 => "Intel Itanium architecture".to_string(),
+        0x04 => "32-bit ARM (Aarch32)".to_string(),
+        0x05 => "64-bit ARM (Aarch64)".to_string(),
+        0x06 => "32-bit RISC-V (RV32)".to_string(),
+        0x07 => "64-bit RISC-V (RV64)".to_string(),
+        0x08 => "128-bit RISC-V (RV128)".to_string(),
+        0x09 => "32-bit LoongArch (LoongArch32)".to_string(),
+        0x0A => "64-bit LoongArch (LoongArch64)".to_string(),
+        _ => format!("{} ({})", OUT_OF_SPEC, processor_architecture.raw),
     }
 }
 
