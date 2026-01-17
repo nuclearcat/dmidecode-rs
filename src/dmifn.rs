@@ -1442,16 +1442,16 @@ pub fn dmi_memory_operating_mode_capability(mode: MemoryOperatingModeCapabilitie
 }
 pub fn dmi_memory_manufacturer_id(attr: &str, id: u16) {
     print!("\t{}: ", attr);
-    match id == 0 {
-        true => println!("{}", UNKNOWN),
-        false => println!("Bank {}, Hex {:#04X}", (id & 0x7F) + 1, id >> 8),
+    match id {
+        0x0000 | 0xFFFF => println!("{} ({:#06X})", UNKNOWN, id),
+        _ => println!("Bank {}, Hex {:#04X}", (id & 0x7F) + 1, id >> 8),
     }
 }
 pub fn dmi_memory_product_id(attr: &str, id: u16) {
     print!("\t{}: ", attr);
-    match id == 0 {
-        true => println!("{}", UNKNOWN),
-        false => println!("{:#06X}", id),
+    match id {
+        0x0000 | 0xFFFF => println!("{} ({:#06X})", UNKNOWN, id),
+        _ => println!("{:#06X}", id),
     }
 }
 pub fn dmi_memory_size(attr: &str, size: MemoryIndicatedSize) {

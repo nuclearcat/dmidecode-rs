@@ -1355,6 +1355,7 @@ pub fn dump_undefined_struct(
         }
         DefinedStruct::MemoryDevice(data) => {
             println!("Memory Device");
+            let parts = data.parts();
             if !quiet {
                 if let Some(physical_memory_array_handle) = data.physical_memory_array_handle() {
                     println!("\tArray Handle: {:#06X}", *physical_memory_array_handle);
@@ -1408,10 +1409,15 @@ pub fn dump_undefined_struct(
             if let Some(device_set) = data.device_set() {
                 dmi_memory_device_set(device_set);
             }
-            if let Some(device_locator) = dmidecode_string_val(&data.device_locator()) {
+            if let Some(device_locator) = dmidecode_string_val_with_index(
+                &data.device_locator(),
+                parts.get_field_byte(0x10),
+            ) {
                 println!("\tLocator: {}", device_locator);
             }
-            if let Some(bank_locator) = dmidecode_string_val(&data.bank_locator()) {
+            if let Some(bank_locator) =
+                dmidecode_string_val_with_index(&data.bank_locator(), parts.get_field_byte(0x11))
+            {
                 println!("\tBank Locator: {}", bank_locator);
             }
             if let Some(memory_type) = data.memory_type() {
@@ -1423,16 +1429,28 @@ pub fn dump_undefined_struct(
             // If a module is present, the remaining fields are relevant
             if module_present {
                 dmi_memory_device_speed("Speed", data.speed(), data.extended_speed());
-                if let Some(manufacturer) = dmidecode_string_val(&data.manufacturer()) {
+                if let Some(manufacturer) = dmidecode_string_val_with_index(
+                    &data.manufacturer(),
+                    parts.get_field_byte(0x17),
+                ) {
                     println!("\tManufacturer: {}", manufacturer);
                 }
-                if let Some(serial_number) = dmidecode_string_val(&data.serial_number()) {
+                if let Some(serial_number) = dmidecode_string_val_with_index(
+                    &data.serial_number(),
+                    parts.get_field_byte(0x18),
+                ) {
                     println!("\tSerial Number: {}", serial_number);
                 }
-                if let Some(asset_tag) = dmidecode_string_val(&data.asset_tag()) {
+                if let Some(asset_tag) = dmidecode_string_val_with_index(
+                    &data.asset_tag(),
+                    parts.get_field_byte(0x19),
+                ) {
                     println!("\tAsset Tag: {}", asset_tag)
                 }
-                if let Some(part_number) = dmidecode_string_val(&data.part_number()) {
+                if let Some(part_number) = dmidecode_string_val_with_index(
+                    &data.part_number(),
+                    parts.get_field_byte(0x1A),
+                ) {
                     println!("\tPart Number: {}", part_number);
                 }
                 if let Some(attributes) = data.attributes() {
@@ -1464,7 +1482,10 @@ pub fn dump_undefined_struct(
                 {
                     dmi_memory_operating_mode_capability(memory_operating_mode_capability);
                 }
-                if let Some(firmware_version) = dmidecode_string_val(&data.firmware_version()) {
+                if let Some(firmware_version) = dmidecode_string_val_with_index(
+                    &data.firmware_version(),
+                    parts.get_field_byte(0x2B),
+                ) {
                     println!("\tFirmware Version: {}", firmware_version);
                 }
                 if let Some(module_manufacturer_id) = data.module_manufacturer_id() {
@@ -2584,5 +2605,15 @@ fn dmidecode_string_val(s: &SMBiosString) -> Option<String> {
         Err(SMBiosStringError::Utf8(val)) => {
             Some(String::from_utf8_lossy(&val.clone().into_bytes()).to_string())
         }
+    }
+}
+
+fn dmidecode_string_val_with_index(s: &SMBiosString, index: Option<u8>) -> Option<String> {
+    match dmidecode_string_val(s) {
+        Some(val) if val == UNKNOWN => match index {
+            Some(idx) => Some(format!("{} (String {:#04X})", val, idx)),
+            None => Some(val),
+        },
+        other => other,
     }
 }
