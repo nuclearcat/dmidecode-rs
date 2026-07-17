@@ -18,7 +18,7 @@ jobs:
         os: [macos-13, ubuntu-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: OS version
       run: uname -a
     - name: Build
