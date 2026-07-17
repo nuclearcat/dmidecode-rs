@@ -50,7 +50,7 @@ jobs:
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 --fail --silent --show-error \
-            https://sh.rustup.rs | sh -s -- --yes --profile minimal --default-toolchain stable
+            https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
           echo "/root/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Build release binary
