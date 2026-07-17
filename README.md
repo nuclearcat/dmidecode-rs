@@ -3,17 +3,17 @@
 ![dmidecode-rs_ci](https://github.com/jrgerber/dmidecode-rs/actions/workflows/dmidecode_ci.yml/badge.svg)
 ![LOC](https://tokei.rs/b1/github/jrgerber/dmidecode-rs?category=code)
 
-dmidecode command written in Rust, is a tool to report SMBIOS table content in human readable format.
+dmidecode-rs is a tool written in Rust that reports SMBIOS table content in human-readable format.
 
 ## Help
 
 ```sh
-dmidecode-rs 0.2.2
+dmidecode-rs 0.2.4
 Jeffrey R. Gerber, Juan Zuluaga
 DMI Table Decoder, Rust Edition ⛭
 
 USAGE:
-    dmidecode [FLAGS] [OPTIONS]
+    dmidecode-rs [FLAGS] [OPTIONS]
 
 FLAGS:
     -h, --help
@@ -82,7 +82,8 @@ OPTIONS:
             keyword corresponds to a given DMI type and a given offset within this entry type.  Not all strings may be
             meaningful or even defined on all systems. Some keywords may return more than one result on some systems
             (e.g.  processor-version on a multi- processor system).  If KEYWORD is not provided or not valid, a list of
-            all valid keywords is printed and dmidecode exits with an error.  This option cannot be used more than once.
+            all valid keywords is printed and dmidecode-rs exits with an error.  This option cannot be used more than
+            once.
 
             Note: on Linux, most of these strings can alternatively be read directly from sysfs, typically from files
             under /sys/devices/virtual/dmi/id.  Most of these files are even readable by regular users.

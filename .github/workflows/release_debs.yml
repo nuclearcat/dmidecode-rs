@@ -66,7 +66,7 @@ jobs:
           output="target/package/dmidecode-rs_${version}_${DISTRIBUTION}_${architecture}.deb"
 
           test -n "$version"
-          install -D --mode=0755 target/release/dmidecode "$package_root/usr/bin/dmidecode"
+          install -D --mode=0755 target/release/dmidecode-rs "$package_root/usr/bin/dmidecode-rs"
           install -D --mode=0644 LICENSE "$package_root/usr/share/doc/dmidecode-rs/copyright"
           install -D --mode=0644 README.md "$package_root/usr/share/doc/dmidecode-rs/README.md"
           mkdir -p "$package_root/DEBIAN"
@@ -79,8 +79,6 @@ jobs:
             'Priority: optional' \
             "Architecture: $architecture" \
             'Depends: libc6, libgcc-s1' \
-            'Conflicts: dmidecode' \
-            'Replaces: dmidecode' \
             "Installed-Size: $installed_size" \
             'Maintainer: Jeffrey R. Gerber <jeffreygerber@gmail.com>' \
             'Homepage: https://github.com/jrgerber/dmidecode-rs' \
@@ -91,7 +89,7 @@ jobs:
           dpkg-deb --build --root-owner-group "$package_root" "$output"
           dpkg-deb --info "$output"
           dpkg-deb --contents "$output"
-          target/release/dmidecode --version
+          target/release/dmidecode-rs --version
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v6

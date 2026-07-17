@@ -41,7 +41,7 @@ pub struct Opt {
     /// even defined on all systems. Some keywords may return more than
     /// one result on some systems (e.g.  processor-version on a multi-
     /// processor system).  If KEYWORD is not provided or not valid, a
-    /// list of all valid keywords is printed and dmidecode exits with
+    /// list of all valid keywords is printed and dmidecode-rs exits with
     /// an error.  This option cannot be used more than once.
     ///
     /// Note: on Linux, most of these strings can alternatively be read

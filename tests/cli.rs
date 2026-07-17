@@ -3,7 +3,7 @@ use predicates::prelude::*;
 use std::{str, process::Command};
 use tempfile::tempdir;
 
-static CLI_COMMAND: &str = "dmidecode";
+static CLI_COMMAND: &str = "dmidecode-rs";
 
 #[test]
 fn test_command_run() -> Result<(), Box<dyn std::error::Error>> {
