@@ -1,0 +1,120 @@
+name: Release Debian packages
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-deb:
+    name: Build .deb (${{ matrix.distribution }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distribution: ubuntu-24.04
+            image: ubuntu:24.04
+          - distribution: ubuntu-25.10
+            image: ubuntu:25.10
+          - distribution: ubuntu-26.04
+            image: ubuntu:26.04
+          - distribution: debian-trixie
+            image: debian:trixie
+    container:
+      image: ${{ matrix.image }}
+      options: --user 0
+
+    steps:
+      - name: Install build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends \
+            build-essential \
+            ca-certificates \
+            curl \
+            dpkg-dev \
+            git
+
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error \
+            https://sh.rustup.rs | sh -s -- --yes --profile minimal --default-toolchain stable
+          echo "/root/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Build release binary
+        run: cargo build --release --verbose
+
+      - name: Build Debian package
+        env:
+          DISTRIBUTION: ${{ matrix.distribution }}
+        run: |
+          version="$(sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml | head -n 1)"
+          architecture="$(dpkg --print-architecture)"
+          package_root="target/package/dmidecode-rs_${version}_${architecture}"
+          output="target/package/dmidecode-rs_${version}_${DISTRIBUTION}_${architecture}.deb"
+
+          test -n "$version"
+          install -D --mode=0755 target/release/dmidecode "$package_root/usr/bin/dmidecode"
+          install -D --mode=0644 LICENSE "$package_root/usr/share/doc/dmidecode-rs/copyright"
+          install -D --mode=0644 README.md "$package_root/usr/share/doc/dmidecode-rs/README.md"
+          mkdir -p "$package_root/DEBIAN"
+
+          installed_size="$(du -sk "$package_root/usr" | cut -f1)"
+          printf '%s\n' \
+            'Package: dmidecode-rs' \
+            "Version: $version" \
+            'Section: utils' \
+            'Priority: optional' \
+            "Architecture: $architecture" \
+            'Depends: libc6, libgcc-s1' \
+            'Conflicts: dmidecode' \
+            'Replaces: dmidecode' \
+            "Installed-Size: $installed_size" \
+            'Maintainer: Jeffrey R. Gerber <jeffreygerber@gmail.com>' \
+            'Homepage: https://github.com/jrgerber/dmidecode-rs' \
+            'Description: SMBIOS table decoder written in Rust' \
+            ' dmidecode-rs reports SMBIOS table contents in human-readable form.' \
+            > "$package_root/DEBIAN/control"
+
+          dpkg-deb --build --root-owner-group "$package_root" "$output"
+          dpkg-deb --info "$output"
+          dpkg-deb --contents "$output"
+          target/release/dmidecode --version
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.distribution }}
+          path: target/package/*.deb
+          if-no-files-found: error
+
+  attach-to-release:
+    name: Attach .deb packages to release
+    if: github.event_name == 'release'
+    needs: build-deb
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: deb-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload packages to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/*.deb --clobber
