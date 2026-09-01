@@ -3236,13 +3236,13 @@ mod tests {
 
     #[test]
     pub fn test_units_formatter_happy() {
-        assert_eq!(dmi_print_helper("A", 33554432, true), "\tA: 32 GB");
-        assert_eq!(dmi_print_helper("A", 32768, true), "\tA: 32 MB");
-        assert_eq!(dmi_print_helper("A", 4096, true), "\tA: 4 MB");
-        assert_eq!(dmi_print_helper("A", 16777216, true), "\tA: 16 GB");
-        assert_eq!(dmi_print_helper("A", 134217728, true), "\tA: 128 GB");
+        assert_eq!(dmi_print_helper("A", 33554432, 1), "\tA: 32 GB");
+        assert_eq!(dmi_print_helper("A", 32768, 1), "\tA: 32 MB");
+        assert_eq!(dmi_print_helper("A", 4096, 1), "\tA: 4 MB");
+        assert_eq!(dmi_print_helper("A", 16777216, 1), "\tA: 16 GB");
+        assert_eq!(dmi_print_helper("A", 134217728, 1), "\tA: 128 GB");
 
-        assert_eq!(dmi_print_helper("A", 16384, false), "\tA: 16 kB");
+        assert_eq!(dmi_print_helper("A", 16384, 0), "\tA: 16 kB");
     }
 
     #[test]
@@ -3250,7 +3250,12 @@ mod tests {
         // We were failing previously when the next tier of units below the most
         // significant were nonzero. IE: 3.5GB vs 3.0GB. We would incorrectly discard
         // the less significant units.
-        assert_eq!(dmi_print_helper("A", 3670016, true), "\tA: 3584 MB");
-        assert_eq!(dmi_print_helper("A", 29884416, true), "\tA: 29184 MB");
+        assert_eq!(dmi_print_helper("A", 3670016, 1), "\tA: 3584 MB");
+        assert_eq!(dmi_print_helper("A", 29884416, 1), "\tA: 29184 MB");
+
+        // Sizes already expressed in megabytes (shift 2) behave the same way.
+        assert_eq!(dmi_print_helper("A", 1536, 2), "\tA: 1536 MB");
+        assert_eq!(dmi_print_helper("A", 1024, 2), "\tA: 1 GB");
+        assert_eq!(dmi_print_helper("A", 32766, 2), "\tA: 32766 MB");
     }
 }

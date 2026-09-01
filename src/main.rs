@@ -17,6 +17,7 @@ use default_out::default_dump;
 use dmiopt::{BiosType, Keyword, Opt};
 use enum_iterator::all;
 use smbioslib::*;
+use std::convert::TryFrom;
 use std::fmt::Write;
 use structopt::StructOpt;
 
@@ -47,6 +48,89 @@ pub fn print_dmidecode_version() {
     println!("# {} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 }
 
+/// Reads a file given to `--from-dump`.
+///
+/// dmidecode writes a 32 byte entry point followed by the structure table, and
+/// earlier releases of this tool wrote and read the bare table on its own. Both
+/// are accepted, so a dump can be moved between the two tools in either
+/// direction. The entry point also carries the SMBIOS version, without which
+/// version-dependent structures cannot be decoded.
+fn load_dump(
+    path: &std::path::Path,
+    output: &mut String,
+) -> Result<SMBiosData, Box<dyn std::error::Error>> {
+    const ENTRY_POINT_LEN: usize = 0x20;
+    let raw = std::fs::read(path)?;
+
+    // dmidecode rewrites the structure table address to 0x20 when it writes a
+    // dump, and seeks to it when reading one back. Honour the address when it
+    // lands inside the file so such dumps read correctly, and otherwise assume
+    // the table follows the entry point, so a dump that kept the original
+    // physical address is still readable.
+    let table_offset = |address: u64| -> usize {
+        match usize::try_from(address) {
+            Ok(offset) if offset >= ENTRY_POINT_LEN && offset < raw.len() => offset,
+            _ => ENTRY_POINT_LEN,
+        }
+    };
+
+    if raw.len() > ENTRY_POINT_LEN {
+        if raw.starts_with(b"_SM3_") {
+            // Each entry point parser wants its own exact length, not the
+            // padded 0x20 byte area the dump reserves for it.
+            let entry_point = raw[..SMBiosEntryPoint64::MINIMUM_SIZE].to_vec();
+            if let Ok(entry_point) = SMBiosEntryPoint64::try_from(entry_point) {
+                writeln!(
+                    output,
+                    "SMBIOS {}.{}.{} present.",
+                    entry_point.major_version(),
+                    entry_point.minor_version(),
+                    entry_point.docrev()
+                )
+                .unwrap();
+
+                let version = SMBiosVersion {
+                    major: entry_point.major_version(),
+                    minor: entry_point.minor_version(),
+                    revision: entry_point.docrev(),
+                };
+                let table = raw[table_offset(entry_point.structure_table_address())..].to_vec();
+                return Ok(SMBiosData::from_vec_and_version(table, Some(version)));
+            }
+        } else if raw.starts_with(b"_SM_") {
+            let entry_point = raw[..SMBiosEntryPoint32::MINIMUM_SIZE].to_vec();
+            if let Ok(entry_point) = SMBiosEntryPoint32::try_from(entry_point) {
+                writeln!(
+                    output,
+                    "SMBIOS {}.{} present.",
+                    entry_point.major_version(),
+                    entry_point.minor_version()
+                )
+                .unwrap();
+                writeln!(
+                    output,
+                    "{} structures occupying {} bytes.",
+                    entry_point.number_of_smbios_structures(),
+                    entry_point.structure_table_length()
+                )
+                .unwrap();
+
+                let version = SMBiosVersion {
+                    major: entry_point.major_version(),
+                    minor: entry_point.minor_version(),
+                    revision: 0,
+                };
+                let table =
+                    raw[table_offset(entry_point.structure_table_address() as u64)..].to_vec();
+                return Ok(SMBiosData::from_vec_and_version(table, Some(version)));
+            }
+        }
+    }
+
+    // No recognisable entry point: the file is a bare structure table.
+    Ok(load_smbios_data_from_file(path)?)
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt: Opt = Opt::from_args();
 
@@ -56,12 +140,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         writeln!(
             &mut output,
-            "Getting SMBIOS data from {}.",
+            "Reading SMBIOS/DMI data from file {}.",
             path.to_string_lossy()
         )
         .unwrap();
 
-        let data = load_smbios_data_from_file(path)?;
+        let data = load_dump(path, &mut output)?;
 
         (data, output)
     } else {
@@ -89,7 +173,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (None, Some(output), None, None, None, false, false, false, false) => {
             print_dmidecode_version();
             // TODO: create stdout output.  dump_raw() and raw_smbios_from_device() do not output.
-            dump_raw(raw_smbios_from_device()?, &output.as_path())?
+            dump_raw(platform::raw_dump()?, &output.as_path())?
         }
         // opt.bios_types, -t, --type TYPE        Only display the entries of given type
         (None, None, Some(bios_types), None, None, false, false, false, false) => {

@@ -34,6 +34,42 @@ pub fn table_load(_opt: &Opt) -> Result<(SMBiosData, String), Error> {
     table_load_from_dev_mem(&path)
 }
 
+/// Returns the bytes to write for `--dump-bin`.
+///
+/// dmidecode's dump format is a 32 byte entry point followed by the structure
+/// table, with the entry point's structure table address rewritten to 0x20 so
+/// that reading the dump back seeks to the right place. Writing that same
+/// layout lets dmidecode read our dumps, and carries the SMBIOS version along
+/// with the table.
+///
+/// If the entry point cannot be read, fall back to writing the bare table.
+pub fn raw_dump() -> Result<Vec<u8>, Error> {
+    const ENTRY_POINT_LEN: usize = 0x20;
+    const SM_TABLE_ADDRESS_OFFSET: usize = 0x18;
+    const SM3_TABLE_ADDRESS_OFFSET: usize = 0x10;
+
+    let table = raw_smbios_from_device()?;
+
+    let mut entry_point = match std::fs::read(SYS_ENTRY_FILE) {
+        Ok(entry_point) if entry_point.len() >= 5 => entry_point,
+        _ => return Ok(table),
+    };
+    entry_point.resize(ENTRY_POINT_LEN, 0);
+
+    if entry_point.starts_with(b"_SM3_") {
+        entry_point[SM3_TABLE_ADDRESS_OFFSET..SM3_TABLE_ADDRESS_OFFSET + 8]
+            .copy_from_slice(&(ENTRY_POINT_LEN as u64).to_le_bytes());
+    } else if entry_point.starts_with(b"_SM_") {
+        entry_point[SM_TABLE_ADDRESS_OFFSET..SM_TABLE_ADDRESS_OFFSET + 4]
+            .copy_from_slice(&(ENTRY_POINT_LEN as u32).to_le_bytes());
+    } else {
+        return Ok(table);
+    }
+
+    entry_point.extend(table);
+    Ok(entry_point)
+}
+
 /// Load from /sys/firmware/dmi/tables/DMI
 fn table_load_from_sysfs() -> Result<(SMBiosData, String), Error> {
     let mut output = String::new();
