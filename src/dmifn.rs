@@ -530,6 +530,22 @@ pub fn dmi_processor_cache(
         false => println!("{:#06X}", *handle),
     }
 }
+/// Prints one of the processor core/thread count fields.
+///
+/// A zero byte means the field carries no value and dmidecode omits the line.
+/// 0xFF means the count did not fit in a byte and lives in the 16-bit
+/// companion field added in SMBIOS 3.0.
+pub fn dmi_processor_count(attr: &str, count: Option<u8>, count_2: Option<u16>) {
+    match count {
+        None | Some(0x00) => (),
+        Some(0xFF) => {
+            if let Some(count_2) = count_2 {
+                println!("\t{}: {}", attr, count_2);
+            }
+        }
+        Some(count) => println!("\t{}: {}", attr, count),
+    }
+}
 pub fn dmi_processor_characteristics(characteristics: ProcessorCharacteristics) {
     if characteristics.raw & 0xFC == 0 {
         println!("\tCharacteristics: None");

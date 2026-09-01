@@ -771,54 +771,22 @@ pub fn dump_undefined_struct(
             if let Some(part_number) = dmidecode_string_val(&data.part_number()) {
                 println!("\tPart Number: {}", part_number);
             }
-            if let Some(core_count) = data.core_count() {
-                print!("\tCore Count: ");
-                match core_count {
-                    CoreCount::Unknown => println!("{}", UNKNOWN),
-                    CoreCount::Count(count) => println!("{}", count),
-                    CoreCount::SeeCoreCount2 => match data.core_count_2() {
-                        Some(core_count_2) => match core_count_2 {
-                            CoreCount2::Unknown => println!("{}", UNKNOWN),
-                            CoreCount2::Count(count) => println!("{}", count),
-                            CoreCount2::Reserved => println!("Reserved"),
-                        },
-                        // CoreCount said to read CoreCount2 but CoreCount2 does not exist.
-                        None => println!("Error"),
-                    },
-                }
-            }
-            if let Some(cores_enabled) = data.cores_enabled() {
-                print!("\tCore Enabled: ");
-                match cores_enabled {
-                    CoresEnabled::Unknown => println!("{}", UNKNOWN),
-                    CoresEnabled::Count(count) => println!("{}", count),
-                    CoresEnabled::SeeCoresEnabled2 => match data.cores_enabled_2() {
-                        Some(cores_enabled_2) => match cores_enabled_2 {
-                            CoresEnabled2::Unknown => println!("{}", UNKNOWN),
-                            CoresEnabled2::Count(count) => println!("{}", count),
-                            CoresEnabled2::Reserved => println!("Reserved"),
-                        },
-                        // CoreEnabled said to read CoreEnabled2 but CoreEnabled2 does not exist.
-                        None => println!("Error"),
-                    },
-                }
-            }
-            if let Some(thread_count) = data.thread_count() {
-                print!("\tThread Count: ");
-                match thread_count {
-                    ThreadCount::Unknown => println!("{}", UNKNOWN),
-                    ThreadCount::Count(count) => println!("{}", count),
-                    ThreadCount::SeeThreadCount2 => match data.thread_count_2() {
-                        Some(thread_count_2) => match thread_count_2 {
-                            ThreadCount2::Unknown => println!("{}", UNKNOWN),
-                            ThreadCount2::Count(count) => println!("{}", count),
-                            ThreadCount2::Reserved => println!("Reserved"),
-                        },
-                        // ThreadCount said to read ThreadCount2 but ThreadCount2 does not exist.
-                        None => println!("Error"),
-                    },
-                }
-            }
+            // dmidecode reads these three fields raw: a zero byte means the
+            // field is not populated and the line is omitted entirely, 0xFF
+            // defers to the 16-bit companion field, and any other value is the
+            // count itself.
+            let parts = data.parts();
+            dmi_processor_count("Core Count", parts.get_field_byte(0x23), parts.get_field_word(0x2A));
+            dmi_processor_count(
+                "Core Enabled",
+                parts.get_field_byte(0x24),
+                parts.get_field_word(0x2C),
+            );
+            dmi_processor_count(
+                "Thread Count",
+                parts.get_field_byte(0x25),
+                parts.get_field_word(0x2E),
+            );
             if let Some(processor_characteristics) = data.processor_characteristics() {
                 dmi_processor_characteristics(processor_characteristics);
             }
