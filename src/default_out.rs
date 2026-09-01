@@ -234,22 +234,9 @@ pub fn dump_undefined_struct(
                 }
             }
 
-            if let Some(bios_vendor_reserved_characteristics) =
-                data.bios_vendor_reserved_characteristics()
-            {
-                println!(
-                    "\tBIOS Vendor Reserved Characteristics: {:#06X}",
-                    bios_vendor_reserved_characteristics
-                );
-            }
-            if let Some(system_vendor_reserved_characteristics) =
-                data.system_vendor_reserved_characteristics()
-            {
-                println!(
-                    "\tSystem Vendor Reserved Characteristics: {:#06X}",
-                    system_vendor_reserved_characteristics
-                );
-            }
+            // Bits 32-47 and 48-63 of the characteristics field are reserved for
+            // the BIOS and system vendors respectively. They carry no defined
+            // meaning, so like dmidecode we do not report them.
 
             match (
                 data.system_bios_major_release(),
