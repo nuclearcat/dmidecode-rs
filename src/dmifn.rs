@@ -1523,14 +1523,14 @@ pub fn dmi_memory_error_syndrome(syndrome: u32) {
     print!("\tVendor Syndrome: ");
     match syndrome == 0 {
         true => println!("{}", UNKNOWN),
-        false => println!("{:#10X}", syndrome),
+        false => println!("{:#010X}", syndrome),
     }
 }
 pub fn dmi_32bit_memory_error_address(attr: &str, address: u32) {
     print!("\t{}: ", attr);
     match address == 0x80000000u32 {
         true => println!("{}", UNKNOWN),
-        false => println!("{:#10X}", address),
+        false => println!("{:#010X}", address),
     }
 }
 pub fn dmi_mapped_address_extended_size(start: u64, end: u64) {
@@ -2274,7 +2274,7 @@ pub fn dmi_event_log_address(access_method: &AccessMethodData, address: u32) {
         AccessMethod::IndexedIO18Bit => print_indexed(),
         AccessMethod::IndexedIO28Bit => print_indexed(),
         AccessMethod::IndexedIO116Bit => print_indexed(),
-        AccessMethod::MemoryMapped32Bit => println!("\tAccess Address: {:#10X}", address),
+        AccessMethod::MemoryMapped32Bit => println!("\tAccess Address: {:#010X}", address),
         AccessMethod::GeneralPurposeNonVolatile => {
             println!("\tAccess Address: {:#06X}", address & u16::MAX as u32)
         }

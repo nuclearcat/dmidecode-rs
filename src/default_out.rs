@@ -1271,7 +1271,7 @@ pub fn dump_undefined_struct(
                 );
             }
             if let Some(log_change_token) = data.log_change_token() {
-                println!("\tChange Token: {:#10X}", log_change_token);
+                println!("\tChange Token: {:#010X}", log_change_token);
             }
             if let Some(log_header_format) = data.log_header_format() {
                 println!(
@@ -1844,7 +1844,7 @@ pub fn dump_undefined_struct(
                 dmi_probe_accuracy(&accuracy);
             }
             if let Some(oem_defined) = data.oem_defined() {
-                println!("\tOEM-specific Information: {:#10X}", oem_defined);
+                println!("\tOEM-specific Information: {:#010X}", oem_defined);
             }
             if let Some(nominal_value) = data.nominal_value() {
                 dmi_voltage_probe_value("Nominal Value", &nominal_value);
@@ -1874,7 +1874,7 @@ pub fn dump_undefined_struct(
                 println!("\tCooling Unit Group: {}", cooling_unit_group);
             }
             if let Some(oem_defined) = data.oem_defined() {
-                println!("\tOEM-specific Information: {:#10X}", oem_defined);
+                println!("\tOEM-specific Information: {:#010X}", oem_defined);
             }
             if let Some(nominal_speed) = data.nominal_speed() {
                 dmi_cooling_device_speed(&nominal_speed);
@@ -1914,7 +1914,7 @@ pub fn dump_undefined_struct(
                 dmi_temperature_probe_accuracy(&accuracy);
             }
             if let Some(oem_defined) = data.oem_defined() {
-                println!("\tOEM-specific Information: {:#10X}", oem_defined);
+                println!("\tOEM-specific Information: {:#010X}", oem_defined);
             }
             if let Some(nominal_value) = data.nominal_value() {
                 dmi_temperature_probe_value("Nominal Value", &nominal_value);
@@ -1951,7 +1951,7 @@ pub fn dump_undefined_struct(
                 dmi_current_probe_accuracy(&accuracy);
             }
             if let Some(oem_defined) = data.oem_defined() {
-                println!("\tOEM-specific Information: {:#10X}", oem_defined);
+                println!("\tOEM-specific Information: {:#010X}", oem_defined);
             }
             if let Some(nominal_value) = data.nominal_value() {
                 dmi_current_probe_value("Nominal Value", &nominal_value);
@@ -2007,7 +2007,7 @@ pub fn dump_undefined_struct(
                 );
             }
             if let Some(bis_entry_32) = data.bis_entry_32() {
-                println!("\t32-bit Entry Point Address: {:#10X}", bis_entry_32);
+                println!("\t32-bit Entry Point Address: {:#010X}", bis_entry_32);
             }
         }
         DefinedStruct::SystemBootInformation(data) => {
@@ -2055,7 +2055,7 @@ pub fn dump_undefined_struct(
                 println!("\tType: {}", dmi_management_device_type(&device_type));
             }
             if let Some(address) = data.address() {
-                println!("\tAddress: {:#10X}", address);
+                println!("\tAddress: {:#010X}", address);
             }
             if let Some(address_type) = data.address_type() {
                 println!(
@@ -2323,7 +2323,7 @@ pub fn dump_undefined_struct(
                                 u16::from_le_bytes(value[0..2].try_into().expect("u16 is 2 bytes"))
                             ),
                             4 => println!(
-                                "{:#10x}",
+                                "{:#010x}",
                                 u32::from_le_bytes(value[0..4].try_into().expect("u32 is 4 bytes"))
                             ),
                             _ => println!("Unexpected size"),
@@ -2391,7 +2391,7 @@ pub fn dump_undefined_struct(
                                             .try_into()
                                             .expect("u32 is 4 bytes"),
                                     );
-                                    println!("\tVendor ID: {:#10X}", vendor_id);
+                                    println!("\tVendor ID: {:#010X}", vendor_id);
                                 }
                             }
                         }
@@ -2463,7 +2463,7 @@ pub fn dump_undefined_struct(
                 dmi_tpm_characteristics(&characteristics);
             }
             if let Some(oem_defined) = data.oem_defined() {
-                println!("\tOEM-specific Information: {:#10X}", oem_defined);
+                println!("\tOEM-specific Information: {:#010X}", oem_defined);
             }
         }
         DefinedStruct::ProcessorAdditionalInformation(data) => {
