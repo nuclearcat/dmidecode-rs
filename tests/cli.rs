@@ -182,3 +182,40 @@ fn test_json_valid() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[test]
+fn test_dimm_map_from_dump() -> Result<(), Box<dyn std::error::Error>> {
+    let dir = tempdir()?;
+    let filename = dir.path().join("memory.bin");
+    let mut table = vec![
+        17, 28, 0x00, 0x11, 0, 16, 0xFE, 0xFF, 72, 0, 64, 0, 0, 32, 9, 0, 1, 2, 0x1A, 0, 0, 0x68,
+        0x10, 3, 4, 0, 5, 2,
+    ];
+    for value in ["DIMM_A1", "BANK 0", "Example", "SERIAL", "ABC-123"] {
+        table.extend_from_slice(value.as_bytes());
+        table.push(0);
+    }
+    table.push(0);
+    table.extend([127, 4, 0xFF, 0xFF, 0, 0]);
+    std::fs::write(&filename, table)?;
+
+    let mut cmd = Command::cargo_bin(CLI_COMMAND)?;
+    cmd.arg("--from-dump").arg(filename).arg("--dimm-map");
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("LOCATOR"))
+        .stdout(predicate::str::contains("DIMM_A1  BANK 0  8 GB  DDR4"));
+
+    dir.close()?;
+    Ok(())
+}
+
+#[test]
+fn test_dimm_map_conflicts_with_other_output_modes() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::cargo_bin(CLI_COMMAND)?;
+    cmd.arg("--dimm-map").arg("--json");
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("cannot be used with"));
+    Ok(())
+}

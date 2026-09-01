@@ -9,11 +9,13 @@
 mod platform;
 
 mod default_out;
+mod dimm_map;
 mod dmifn;
 mod dmiopt;
 mod error;
 
 use default_out::default_dump;
+use dimm_map::render_dimm_map;
 use dmiopt::{BiosType, Keyword, Opt};
 use enum_iterator::all;
 use smbioslib::*;
@@ -161,28 +163,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         opt.oem_string.as_ref(),
         opt.undefined_dump,
         opt.list,
+        opt.dimm_map,
         opt.json_pretty,
         opt.json,
     ) {
         // opt.keyword, -s, --string KEYWORD   Only display the value of the given DMI string
-        (Some(keyword), None, None, None, None, false, false, false, false) => {
+        (Some(keyword), None, None, None, None, false, false, false, false, false) => {
             let output = keyword.parse(&smbios_data.0)?;
             println!("{}", output);
         }
         // opt.output, --dump-bin FILE    Dump the DMI data to a binary file
-        (None, Some(output), None, None, None, false, false, false, false) => {
+        (None, Some(output), None, None, None, false, false, false, false, false) => {
             print_dmidecode_version();
             // TODO: create stdout output.  dump_raw() and raw_smbios_from_device() do not output.
             dump_raw(platform::raw_dump()?, &output.as_path())?
         }
         // opt.bios_types, -t, --type TYPE        Only display the entries of given type
-        (None, None, Some(bios_types), None, None, false, false, false, false) => {
+        (None, None, Some(bios_types), None, None, false, false, false, false, false) => {
             print_dmidecode_version();
             println!("{}", smbios_data.1);
             BiosType::parse_and_display(bios_types, &smbios_data.0, opt.quiet);
         }
         // opt.handle, -H, --handle HANDLE    Only display the entry of given handle
-        (None, None, None, Some(handle), None, false, false, false, false) => {
+        (None, None, None, Some(handle), None, false, false, false, false, false) => {
             print_dmidecode_version();
             println!("{}", smbios_data.1);
             let found_struct = smbios_data
@@ -195,7 +198,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("{:#X?}", &found_struct.defined_struct())
         }
         // opt.oem_string, --oem-string N     Only display the value of the given OEM string
-        (None, None, None, None, Some(oem), false, false, false, false) => {
+        (None, None, None, None, Some(oem), false, false, false, false, false) => {
             fn invalid_num(s: &str) -> Result<(), Box<dyn std::error::Error>> {
                 Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::InvalidInput,
@@ -247,7 +250,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         // opt.undefined_dump, -u, --dump             Do not decode the entries
-        (None, None, None, None, None, true, false, false, false) => {
+        (None, None, None, None, None, true, false, false, false, false) => {
             print_dmidecode_version();
             println!("{}", smbios_data.1);
             for undefined_struct in smbios_data.0 {
@@ -299,21 +302,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         // opt.list, -l, --list        List supported DMI string
-        (None, None, None, None, None, false, true, false, false) => {
+        (None, None, None, None, None, false, true, false, false, false) => {
             let keywords = all::<Keyword>().collect::<Vec<_>>();
             for keyword in keywords {
                 let kstr = format!("{}", &keyword);
                 println!("{}", kstr);
             }
         }
+        // opt.dimm_map, --dimm-map    Display a compact map of memory sockets.
+        (None, None, None, None, None, false, false, true, false, false) => {
+            println!("{}", render_dimm_map(&smbios_data.0));
+        }
         // opt.json, -j, --json        Display output in JSON pretty print format.
-        (None, None, None, None, None, false, false, true, false) => {
+        (None, None, None, None, None, false, false, false, true, false) => {
             if let Ok(output) = serde_json::to_string_pretty(&smbios_data.0) {
                 println!("{}", output)
             }
         }
         // opt.json_compat, --json-compact        Display output in JSON compact format.
-        (None, None, None, None, None, false, false, false, true) => {
+        (None, None, None, None, None, false, false, false, false, true) => {
             if let Ok(output) = serde_json::to_string(&smbios_data.0) {
                 println!("{}", output)
             }

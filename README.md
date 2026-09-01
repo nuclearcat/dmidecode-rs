@@ -5,6 +5,22 @@
 
 dmidecode-rs is a tool written in Rust that reports SMBIOS table content in human-readable format.
 
+## DIMM map
+
+Use `--dimm-map` for a compact, one-row-per-socket view. It includes empty
+sockets and uses the physical locator labels supplied by the system firmware.
+
+```sh
+sudo dmidecode-rs --dimm-map
+```
+
+```text
+LOCATOR  BANK    SIZE   TYPE  SPEED      MANUFACTURER  PART NUMBER
+-------  ------  -----  ----  ---------  ------------  -----------
+DIMM_A1   BANK 0  16 GB  DDR5  4800 MT/s  Example       ABC-123
+DIMM_A2   BANK 1  Empty  -     -          -             -
+```
+
 ## Help
 
 ```sh
@@ -18,6 +34,9 @@ USAGE:
 FLAGS:
     -h, --help
             Prints help information
+
+        --dimm-map
+            Display a compact map of installed and empty memory sockets
 
     -j, --json
             Display output in JSON compact format

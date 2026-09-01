@@ -116,6 +116,23 @@ pub struct Opt {
     /// Display output in JSON compact format.
     #[structopt(short, long)]
     pub json: bool,
+
+    /// Display a compact map of installed and empty memory sockets.
+    #[structopt(
+        long,
+        conflicts_with_all = &[
+            "keyword",
+            "output",
+            "bios-types",
+            "handle",
+            "oem-string",
+            "undefined-dump",
+            "list",
+            "json-pretty",
+            "json",
+        ]
+    )]
+    pub dimm_map: bool,
 }
 
 impl Opt {
@@ -134,6 +151,7 @@ impl Opt {
             && !self.list
             && !self.json_pretty
             && !self.json
+            && !self.dimm_map
     }
 }
 
