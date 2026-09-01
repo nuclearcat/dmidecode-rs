@@ -1063,10 +1063,10 @@ pub fn dmi_cache_size(
         },
         None => None,
     } {
-        dmi_print_memory_size(attr, kb, true);
+        dmi_print_memory_size(attr, kb, 1);
     }
 }
-fn dmi_print_helper(attr: &str, size: u64, shift: bool) -> String {
+fn dmi_print_helper(attr: &str, size: u64, shift: usize) -> String {
     // The number 0 has no units, report it as 0 bytes.
     if size == 0 {
         return format!("\t{}: 0 bytes", attr);
@@ -1081,7 +1081,7 @@ fn dmi_print_helper(attr: &str, size: u64, shift: bool) -> String {
     bytes_buckets[3] = (size >> 30) & 0x3FF; // GB
     bytes_buckets[4] = (size >> 40) & 0x3FF; // TB
     bytes_buckets[5] = (size >> 50) & 0x3FF; // PB
-    bytes_buckets[6] = (size >> 60) & 0x3FF; // EB
+    bytes_buckets[6] = size >> 60; // EB
 
     // Find the first bucket where we have at least one of the unit
     let mut i = 6;
@@ -1096,12 +1096,13 @@ fn dmi_print_helper(attr: &str, size: u64, shift: bool) -> String {
         bytes_buckets[i]
     };
 
-    if shift {
-        i += 1;
-    }
-    format!("\t{}: {} {}", attr, capacity, UNITS[i])
+    format!("\t{}: {} {}", attr, capacity, UNITS[i + shift])
 }
-pub fn dmi_print_memory_size(attr: &str, size: u64, shift: bool) {
+/// Prints a size, choosing the largest unit that divides it exactly.
+///
+/// `shift` names the unit the value is already expressed in: 0 for bytes,
+/// 1 for kB, 2 for MB.
+pub fn dmi_print_memory_size(attr: &str, size: u64, shift: usize) {
     println!("{}", &dmi_print_helper(attr, size, shift));
 }
 pub fn dmi_cache_types(attr: &str, types: SramTypes, flat: bool) {
@@ -1209,24 +1210,32 @@ pub fn dmi_memory_device_width(attr: &str, width: u16) {
         false => println!("{} bits", width),
     }
 }
+/// Prints the SMBIOS 2.7 extended memory device size, which is in megabytes.
+///
+/// Unlike the other size fields this one uses the greatest unit that can show
+/// the value exactly, rather than rounding down to the next unit.
+pub fn dmi_memory_device_extended_size(megabytes: u32) {
+    let megabytes = megabytes & 0x7FFF_FFFF;
+    if megabytes & 0x3FF != 0 {
+        println!("\tSize: {} MB", megabytes);
+    } else if megabytes & 0xF_FFFF != 0 {
+        println!("\tSize: {} GB", megabytes >> 10);
+    } else {
+        println!("\tSize: {} TB", megabytes >> 20);
+    }
+}
 pub fn dmi_memory_device_size(size: MemorySize) {
-    print!("\tSize: ");
+    const ATTR: &str = "Size";
     match size {
-        MemorySize::NotInstalled => println!("No Module Installed"),
-        MemorySize::Unknown => println!("{}", UNKNOWN),
+        MemorySize::NotInstalled => println!("\t{}: No Module Installed", ATTR),
+        MemorySize::Unknown => println!("\t{}: {}", ATTR, UNKNOWN),
         MemorySize::SeeExtendedSize => {
-            println!("Error, extended Size does not exist.")
+            println!("\t{}: Error, extended Size does not exist.", ATTR)
         }
-        MemorySize::Kilobytes(size_kb) => println!("{} kB", size_kb),
-        MemorySize::Megabytes(size_mb) => {
-            // Values should be at most 32GB - 1MB here, since that is the
-            // cutoff before the Extended Size field is used.
-            if size_mb >= 1024 {
-                println!("{} GB", size_mb / 1024);
-            } else {
-                println!("{} MB", size_mb);
-            }
-        }
+        // Both granularities go through the same unit stepping, so a 1536 MB
+        // module reports "1536 MB" rather than being truncated to "1 GB".
+        MemorySize::Kilobytes(size_kb) => dmi_print_memory_size(ATTR, size_kb as u64, 1),
+        MemorySize::Megabytes(size_mb) => dmi_print_memory_size(ATTR, size_mb as u64, 2),
     };
 }
 pub fn dmi_memory_device_form_factor(form_factor: MemoryFormFactorData) -> String {
@@ -1487,7 +1496,7 @@ pub fn dmi_memory_size(attr: &str, size: MemoryIndicatedSize) {
                 println!("\t{}: None", attr);
             }
             _ => {
-                dmi_print_memory_size(attr, bytes, false);
+                dmi_print_memory_size(attr, bytes, 0);
             }
         },
     }
@@ -1560,7 +1569,7 @@ pub fn dmi_mapped_address_extended_size(start: u64, end: u64) {
     const ATTR: &str = "Range Size";
     match start >= end {
         true => println!("\t{}: Invalid", ATTR),
-        false => dmi_print_memory_size(ATTR, end - start + 1, false),
+        false => dmi_print_memory_size(ATTR, end - start + 1, 0),
     }
 }
 pub fn dmi_memory_array_location(location: MemoryArrayLocationData) -> String {

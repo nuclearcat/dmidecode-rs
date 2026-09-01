@@ -93,7 +93,7 @@ pub fn dump_undefined_struct(
                     // The legacy field counts 64 kB units. Step it up to MB or
                     // GB the same way dmidecode does rather than reporting a
                     // 32 MB ROM as "32768 kB".
-                    RomSize::Kilobytes(size) => dmi_print_memory_size(ROM_SIZE, size as u64, true),
+                    RomSize::Kilobytes(size) => dmi_print_memory_size(ROM_SIZE, size as u64, 1),
                     // The extended field already carries its own unit.
                     RomSize::Megabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, MB),
                     RomSize::Gigabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, GB),
@@ -1276,12 +1276,12 @@ pub fn dump_undefined_struct(
                 const MAXIMUM_CAPACITY: &str = "Maximum Capacity";
                 match maximum_capacity {
                     MaximumMemoryCapacity::Kilobytes(capacity_kb) => {
-                        dmi_print_memory_size(MAXIMUM_CAPACITY, capacity_kb as u64, true)
+                        dmi_print_memory_size(MAXIMUM_CAPACITY, capacity_kb as u64, 1)
                     }
                     MaximumMemoryCapacity::SeeExtendedMaximumCapacity => {
                         match data.extended_maximum_capacity() {
                             Some(capacity_bytes) => {
-                                dmi_print_memory_size(MAXIMUM_CAPACITY, capacity_bytes, false)
+                                dmi_print_memory_size(MAXIMUM_CAPACITY, capacity_bytes, 0)
                             }
                             None => println!("\t{}: {}", MAXIMUM_CAPACITY, UNKNOWN),
                         }
@@ -1334,17 +1334,14 @@ pub fn dump_undefined_struct(
                 }
                 (Some(size1), Some(size2)) => match size1 == MemorySize::SeeExtendedSize {
                     true => {
-                        print!("\tSize: ");
+                        // The size word said to read the extended field, so a
+                        // module is present whatever that field holds.
+                        module_present = true;
                         match size2 {
                             MemorySizeExtended::Megabytes(megabytes) => {
-                                module_present = true;
-                                match (31 - megabytes.leading_zeros()) / 10 {
-                                    0 => println!("{} MB", megabytes),
-                                    1 => println!("{} GB", megabytes >> 10),
-                                    _ => println!("{} TB", megabytes >> 20),
-                                }
+                                dmi_memory_device_extended_size(megabytes)
                             }
-                            MemorySizeExtended::SeeSize => println!("0 MB"),
+                            MemorySizeExtended::SeeSize => dmi_memory_device_extended_size(0),
                         }
                     }
                     false => {
@@ -2479,7 +2476,7 @@ pub fn dump_undefined_struct(
                 match image_size {
                     FirmwareImageSize::Unknown => println!("\tImage Size: Unknown"),
                     FirmwareImageSize::Bytes(bytes) => {
-                        dmi_print_memory_size("Image Size", bytes, false)
+                        dmi_print_memory_size("Image Size", bytes, 0)
                     }
                 }
             }
