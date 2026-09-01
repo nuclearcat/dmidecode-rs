@@ -2596,17 +2596,12 @@ pub fn dump_undefined_struct(
             println!("End Of Table");
         }
         DefinedStruct::Undefined(data) => {
-            if data.parts().header.struct_type() >= 128 {
-                println!("OEM-specific");
-                if !data.parts().fields.is_empty() {
-                    println!(
-                        "\tRaw Data: {}",
-                        format_hex_bytes(&data.parts().fields)
-                    );
-                }
-            } else {
-                println!("{}", UNKNOWN);
+            let parts = data.parts();
+            match parts.header.struct_type() >= 128 {
+                true => println!("OEM-specific Type"),
+                false => println!("Unknown Type"),
             }
+            dmi_dump(parts);
         }
     }
 }
@@ -2634,6 +2629,28 @@ fn dmidecode_string_val_with_index(s: &SMBiosString, index: Option<u8>) -> Optio
     }
 }
 
+/// Dumps a structure that has no decoder: the header and formatted area as
+/// rows of sixteen bytes, followed by the string-set if the structure has one.
+fn dmi_dump(parts: &UndefinedStruct) {
+    println!("\tHeader and Data:");
+    for row in parts.fields.chunks(16) {
+        println!("\t\t{}", format_hex_bytes(row));
+    }
+
+    let strings: Vec<String> = parts
+        .strings
+        .iter()
+        .filter(|string| !string.is_empty())
+        .map(|string| String::from_utf8_lossy(string).into_owned())
+        .collect();
+
+    if !strings.is_empty() {
+        println!("\tStrings:");
+        for string in strings {
+            println!("\t\t{}", string);
+        }
+    }
+}
 fn format_hex_bytes(bytes: &[u8]) -> String {
     let mut out = String::new();
     for (i, byte) in bytes.iter().enumerate() {
