@@ -1232,7 +1232,7 @@ pub fn dump_undefined_struct(
         DefinedStruct::EventLog(data) => {
             println!("System Event Log");
             if let Some(log_area_length) = data.log_area_length() {
-                println!("\tArea Length: {}", log_area_length);
+                println!("\tArea Length: {} {}", log_area_length, BYTES);
             }
             match (data.log_header_start_offset(), data.log_data_start_offset()) {
                 (Some(log_header_start_offset), Some(log_data_start_offset)) => {
