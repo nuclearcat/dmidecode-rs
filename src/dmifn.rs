@@ -1387,7 +1387,9 @@ pub fn dmi_memory_voltage_value(attr: &str, millivolts: u16) {
             let volts = (millivolts as f32) / 1000f32;
             match millivolts % 100 == 0 {
                 true => println!("\t{}: {:.1} V", attr, volts),
-                false => println!("\t{}: {:e} V", attr, volts),
+                // Display prints the shortest round-tripping form, matching
+                // the "%g" dmidecode uses for values such as 1.35 or 0.515.
+                false => println!("\t{}: {} V", attr, volts),
             }
         }
     }
