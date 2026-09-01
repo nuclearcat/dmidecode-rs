@@ -2383,8 +2383,12 @@ pub fn dump_undefined_struct(
                 minor: 2,
                 revision: 0,
             };
-            if let Some(version) = bios_version {
-                if version < three_two_version {
+            // Structures predating 3.2 carry only the interface type. When the
+            // version is unknown (a raw table with no entry point) assume the
+            // current layout, which is what all recent firmware emits.
+            let legacy_layout = bios_version.map_or(false, |version| version < three_two_version);
+            {
+                if legacy_layout {
                     if let Some(interface_type) = data.interface_type() {
                         println!(
                             "\tInterface Type: {}",
@@ -2407,20 +2411,6 @@ pub fn dump_undefined_struct(
                         }
                     }
                 } else {
-                    if let Some(interface_type_specific_data_length) =
-                        data.interface_type_specific_data_length()
-                    {
-                        println!(
-                            "\tInterface Type Specific Data Length: {}",
-                            interface_type_specific_data_length
-                        );
-                    }
-                    if let Some(number_of_protocol_records) = data.number_of_protocol_records() {
-                        println!(
-                            "\tNumber Of Protocol Records: {}",
-                            number_of_protocol_records
-                        );
-                    }
                     dmi_parse_controller_structure(&data);
                 }
             }

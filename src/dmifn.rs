@@ -3016,7 +3016,8 @@ pub fn dmi_parse_controller_structure(data: &SMBiosManagementControllerHostInter
         for protocol_record in data.protocol_record_iterator() {
             if let Some(protocol_type) = protocol_record.protocol_type() {
                 println!(
-                    "\tProtocol ID: {}",
+                    "\tProtocol ID: {:02x} ({})",
+                    protocol_type.raw,
                     dmi_protocol_record_type(&protocol_type)
                 );
                 /*
@@ -3036,7 +3037,7 @@ pub fn dmi_parse_controller_structure(data: &SMBiosManagementControllerHostInter
                             /*
                              * DSP0270: 8.6: Redfish Over IP Service UUID
                              */
-                            println!("\tService UUID: {:02X}{:02X}{:02X}{:02X}-{:02X}{:02X}-{:02X}{:02X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}", 
+                            println!("\t\tService UUID: {:02x}{:02x}{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}-{:02x}{:02x}{:02x}{:02x}{:02x}{:02x}", 
                                     rdata[3], rdata[2], rdata[1], rdata[0], rdata[5], rdata[4], rdata[7], rdata[6], rdata[8], rdata[9], rdata[10], rdata[11], rdata[12], rdata[13], rdata[14], rdata[15]);
                             /*
                              * DSP0270: 8.6: Redfish Over IP Host IP Assignment Type
@@ -3045,25 +3046,25 @@ pub fn dmi_parse_controller_structure(data: &SMBiosManagementControllerHostInter
                              */
                             let assign_val = rdata[16];
                             println!(
-                                "\tHost IP Assignment Type: {}",
+                                "\t\tHost IP Assignment Type: {}",
                                 dmi_protocol_assignment_type(assign_val)
                             );
                             /* DSP0270: 8.6: Redfish Over IP Host Address format */
                             let addrtype = rdata[17];
                             let addrstr = dmi_address_type(addrtype);
-                            println!("\tHost IP Address Format: {}", addrstr);
+                            println!("\t\tHost IP Address Format: {}", addrstr);
                             /* DSP0270: 8.6 IP Assignment types */
                             /* We only use the Host IP Address and Mask if the assignment type is static */
                             if assign_val == 0x1 || assign_val == 0x3 {
                                 /* DSP0270: 8.6: the Host IPv[4|6] Address */
                                 println!(
-                                    "\t{} Address: {}",
+                                    "\t\t{} Address: {}",
                                     addrstr,
                                     dmi_address_decode(&rdata[18..], addrtype)
                                 );
                                 /* DSP0270: 8.6: Prints the Host IPv[4|6] Mask */
                                 println!(
-                                    "\t{} Mask: {}",
+                                    "\t\t{} Mask: {}",
                                     addrstr,
                                     dmi_address_decode(&rdata[34..], addrtype)
                                 );
@@ -3072,23 +3073,23 @@ pub fn dmi_parse_controller_structure(data: &SMBiosManagementControllerHostInter
                             let assign_val = rdata[50];
                             /* Redfish Service IP Discovery type mirrors Host IP Assignment type */
                             println!(
-                                "\tRedfish Service IP Discovery Type: {}",
+                                "\t\tRedfish Service IP Discovery Type: {}",
                                 dmi_protocol_assignment_type(assign_val),
                             );
                             /* DSP0270: 8.6: Get the Redfish Service IP Address Format */
                             let addrtype = rdata[51];
                             let addrstr = dmi_address_type(addrtype);
-                            println!("\tRedfish Service IP Address Format: {}", addrstr);
+                            println!("\t\tRedfish Service IP Address Format: {}", addrstr);
                             if assign_val == 0x1 || assign_val == 0x3 {
                                 /* DSP0270: 8.6: Prints the Redfish IPv[4|6] Service Address */
                                 println!(
-                                    "\t{} Redfish Service Address: {}",
+                                    "\t\t{} Redfish Service Address: {}",
                                     addrstr,
                                     dmi_address_decode(&rdata[52..], addrtype)
                                 );
                                 /* DSP0270: 8.6: Prints the Redfish IPv[4|6] Service Mask */
                                 println!(
-                                    "\t{} Redfish Service Mask: {}",
+                                    "\t\t{} Redfish Service Mask: {}",
                                     addrstr,
                                     dmi_address_decode(&rdata[68..], addrtype)
                                 );
@@ -3099,8 +3100,8 @@ pub fn dmi_parse_controller_structure(data: &SMBiosManagementControllerHostInter
                                 let vlan = u32::from_le_bytes(
                                     rdata[86..90].try_into().expect("u32 is 4 bytes"),
                                 );
-                                println!("\tRedfish Service Port: {}", port);
-                                println!("\tRedfish Service Vlan: {}", vlan);
+                                println!("\t\tRedfish Service Port: {}", port);
+                                println!("\t\tRedfish Service Vlan: {}", vlan);
                             }
                             /* DSP0270: 8.6: Redfish host length and name */
                             let hlen = rdata[90];
@@ -3109,7 +3110,7 @@ pub fn dmi_parse_controller_structure(data: &SMBiosManagementControllerHostInter
                              * size of a protocol record) cannot exceed the record length
                              * (rec[0x1])
                              */
-                            print!("\tRedfish Service Hostname: ");
+                            print!("\t\tRedfish Service Hostname: ");
                             match (hlen as usize) + 91 > rlen {
                                 true => println!("{}", OUT_OF_SPEC),
                                 false => {
