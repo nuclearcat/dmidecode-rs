@@ -683,7 +683,7 @@ pub fn dump_undefined_struct(
                     ProcessorVoltage::SupportedVolts(supported) => {
                         let voltages = supported.voltages();
                         match voltages.len() == 0 {
-                            true => print!("{}", UNKNOWN),
+                            true => println!("{}", UNKNOWN),
                             false => {
                                 let mut iter = voltages.iter();
                                 print!("{:.1} V", iter.next().unwrap());
