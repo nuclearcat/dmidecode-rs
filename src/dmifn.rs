@@ -2824,7 +2824,8 @@ pub fn dmi_ipmi_base_address(
                 AddressBit::One => address_stripped | 1,
             };
 
-            println!("{:#X} ({})", actual_address, memory_type);
+            // dmidecode prints the address as two zero-padded 32-bit halves
+            println!("{:#018X} ({})", actual_address, memory_type);
         }
     }
 }

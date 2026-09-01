@@ -2165,10 +2165,12 @@ pub fn dump_undefined_struct(
                 println!("\tI2C Slave Address: {:#04x}", i2c_target_address >> 1);
             }
             if let Some(nvstorage_device_address) = data.nvstorage_device_address() {
-                print!("\tNV Storage Device Address: ");
                 match nvstorage_device_address == u8::MAX {
-                    true => println!("Not Present"),
-                    false => println!("{}", nvstorage_device_address),
+                    true => println!("\tNV Storage Device: Not Present"),
+                    false => println!(
+                        "\tNV Storage Device Address: {}",
+                        nvstorage_device_address
+                    ),
                 }
             }
             match (data.interface_type(), data.base_address()) {
@@ -2188,20 +2190,24 @@ pub fn dump_undefined_struct(
                             "\tRegister Spacing: {}",
                             dmi_ipmi_register_spacing(&base_address_modifier.register_spacing)
                         );
-                        println!(
-                            "\tInterrupt Polarity: {}",
-                            match &base_address_modifier.interrupt_polarity {
-                                InterruptPolarity::ActiveHigh => "Active High",
-                                InterruptPolarity::ActiveLow => "Active Low",
-                            }
-                        );
-                        println!(
-                            "\tInterrupt Trigger Mode: {}",
-                            match &base_address_modifier.interrupt_trigger_mode {
-                                InterruptTriggerMode::Level => "Level",
-                                InterruptTriggerMode::Edge => "Edge",
-                            }
-                        );
+                        // Polarity and trigger mode are only meaningful when the
+                        // interrupt information bit says they were filled in.
+                        if base_address_modifier.interrupt_info == InterruptInfo::Specified {
+                            println!(
+                                "\tInterrupt Polarity: {}",
+                                match &base_address_modifier.interrupt_polarity {
+                                    InterruptPolarity::ActiveHigh => "Active High",
+                                    InterruptPolarity::ActiveLow => "Active Low",
+                                }
+                            );
+                            println!(
+                                "\tInterrupt Trigger Mode: {}",
+                                match &base_address_modifier.interrupt_trigger_mode {
+                                    InterruptTriggerMode::Level => "Level",
+                                    InterruptTriggerMode::Edge => "Edge",
+                                }
+                            );
+                        }
                     }
                 }
                 _ => (),
