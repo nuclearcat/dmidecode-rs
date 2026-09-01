@@ -1291,12 +1291,12 @@ pub fn dump_undefined_struct(
                 for type_descriptor in type_descriptors.into_iter().enumerate() {
                     println!(
                         "\tDescriptor {}: {}",
-                        type_descriptor.0,
+                        type_descriptor.0 + 1,
                         dmi_event_log_descriptor_type(&type_descriptor.1.log_type())
                     );
                     println!(
                         "\tData Format {}: {}",
-                        type_descriptor.0,
+                        type_descriptor.0 + 1,
                         dmi_event_log_descriptor_format(
                             &type_descriptor.1.variable_data_format_type()
                         )
@@ -2304,7 +2304,7 @@ pub fn dump_undefined_struct(
         DefinedStruct::AdditionalInformation(data) => {
             if !quiet {
                 for entry in data.entry_iterator().enumerate() {
-                    println!("Additional Information {}", entry.0);
+                    println!("Additional Information {}", entry.0 + 1);
                     if let Some(referenced_handle) = entry.1.referenced_handle() {
                         println!("\tReferenced Handle: {:#06x}", *referenced_handle);
                     }
