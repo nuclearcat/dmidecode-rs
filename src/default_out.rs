@@ -1019,15 +1019,14 @@ pub fn dump_undefined_struct(
             if let Some(slot_designation) = dmidecode_string_val(&data.slot_designation()) {
                 println!("\tDesignation: {}", slot_designation);
             }
-            match (data.slot_data_bus_width(), data.system_slot_type()) {
-                (Some(slot_data_bus_width), Some(system_slot_type)) => {
-                    println!(
-                        "\tType: {} {}",
-                        dmi_slot_bus_width(&slot_data_bus_width),
-                        dmi_slot_type(&system_slot_type)
-                    );
-                }
-                _ => (),
+            if let Some(system_slot_type) = data.system_slot_type() {
+                println!("\tType: {}", dmi_slot_type(&system_slot_type));
+            }
+            if let Some(slot_data_bus_width) = data.slot_data_bus_width() {
+                println!(
+                    "\tData Bus Width: {}",
+                    dmi_slot_bus_width(&slot_data_bus_width)
+                );
             }
             if let Some(current_usage) = data.current_usage() {
                 println!(
@@ -1039,20 +1038,7 @@ pub fn dump_undefined_struct(
                 println!("\tLength: {}", dmi_slot_length(&slot_length));
             }
             match (data.slot_id(), data.system_slot_type()) {
-                (Some(slot_id), Some(slot_type)) => match slot_type.value {
-                    SystemSlotType::Mca => println!("\tID: {}", slot_id.byte_0()),
-                    SystemSlotType::Isa => println!("\tID: {}", slot_id.byte_0()),
-                    SystemSlotType::Pci => println!("\tID: {}", slot_id.byte_0()),
-                    SystemSlotType::Agp(_) => println!("\tID: {}", slot_id.byte_0()),
-                    SystemSlotType::PciX => println!("\tID: {}", slot_id.byte_0()),
-                    SystemSlotType::PciExpress(_, _) => println!("\tID: {}", slot_id.byte_0()),
-                    SystemSlotType::Pcmcia => println!(
-                        "\tID: Adapter {}, Socket {}",
-                        slot_id.byte_0(),
-                        slot_id.byte_1()
-                    ),
-                    _ => (),
-                },
+                (Some(slot_id), Some(slot_type)) => dmi_slot_id(&slot_id, &slot_type),
                 _ => (),
             }
             dmi_slot_characteristics(

@@ -1837,26 +1837,44 @@ pub fn dmi_port_type(port_type_data: &PortInformationPortTypeData) -> String {
     }
 }
 pub fn dmi_slot_bus_width(width: &SlotWidthData) -> String {
-    let print = match width.value {
-        SlotWidth::Other => OTHER,
-        SlotWidth::Unknown => UNKNOWN,
-        SlotWidth::Bit8 => "8-bit",
-        SlotWidth::Bit16 => "16-bit",
-        SlotWidth::Bit32 => "32-bit",
-        SlotWidth::Bit64 => "64-bit",
-        SlotWidth::Bit128 => "128-bit",
-        SlotWidth::X1 => "x1",
-        SlotWidth::X2 => "x2",
-        SlotWidth::X4 => "x4",
-        SlotWidth::X8 => "x8",
-        SlotWidth::X12 => "x12",
-        SlotWidth::X16 => "x16",
-        SlotWidth::X32 => "x32",
-        SlotWidth::None => "",
+    // Reported on its own "Data Bus Width" line, which uses a different
+    // vocabulary from the width that used to be folded into the slot type.
+    let print = match width.raw {
+        0x01 => OTHER,
+        0x02 => UNKNOWN,
+        0x03 => "8 bit",
+        0x04 => "16 bit",
+        0x05 => "32 bit",
+        0x06 => "64 bit",
+        0x07 => "128 bit",
+        0x08 => "1x or x1",
+        0x09 => "2x or x2",
+        0x0A => "4x or x4",
+        0x0B => "8x or x8",
+        0x0C => "12x or x12",
+        0x0D => "16x or x16",
+        0x0E => "32x or x32",
+        _ => OUT_OF_SPEC,
     };
-    match print == "" {
-        true => OUT_OF_SPEC.to_string(),
-        false => print.to_string(),
+    print.to_string()
+}
+/// Whether dmidecode reports a slot ID for this slot type, and in what form.
+pub fn dmi_slot_id(slot_id: &SystemSlotId, slot_type: &SystemSlotTypeData) {
+    match slot_type.raw {
+        // MCA, EISA, PCI, AGP, PCI-X, PCI Express generations 2 through 6,
+        // and the 0xA5-0xC4 block of PCI Express and M.2 variants. 0xB7 is
+        // absent from the list, matching dmidecode.
+        0x04..=0x06
+        | 0x0E..=0x13
+        | 0x1F..=0x23
+        | 0xA5..=0xB6
+        | 0xB8..=0xC4 => println!("\tID: {}", slot_id.byte_0()),
+        0x07 => println!(
+            "\tID: Adapter {}, Socket {}",
+            slot_id.byte_0(),
+            slot_id.byte_1()
+        ),
+        _ => (),
     }
 }
 pub fn dmi_slot_type(system_slot_type: &SystemSlotTypeData) -> String {
