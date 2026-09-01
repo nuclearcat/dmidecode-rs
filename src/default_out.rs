@@ -88,14 +88,22 @@ pub fn dump_undefined_struct(
 
             let rom_size = data.extended_rom_size().or(data.rom_size());
             if let Some(rom_size) = rom_size {
-                print!("\tROM Size: ");
+                const ROM_SIZE: &str = "ROM Size";
                 match rom_size {
-                    RomSize::Kilobytes(size) => println!("{} {}", size, KB),
-                    RomSize::Megabytes(size) => println!("{} {}", size, MB),
-                    RomSize::Gigabytes(size) => println!("{} {}", size, GB),
-                    RomSize::Undefined(data) => println!("{} ({})", OUT_OF_SPEC, data),
+                    // The legacy field counts 64 kB units. Step it up to MB or
+                    // GB the same way dmidecode does rather than reporting a
+                    // 32 MB ROM as "32768 kB".
+                    RomSize::Kilobytes(size) => {
+                        dmi_print_memory_size(ROM_SIZE, size as u64, true)
+                    }
+                    // The extended field already carries its own unit.
+                    RomSize::Megabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, MB),
+                    RomSize::Gigabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, GB),
+                    RomSize::Undefined(data) => {
+                        println!("\t{}: {} ({})", ROM_SIZE, OUT_OF_SPEC, data)
+                    }
                     // Spec < 3.1.0
-                    RomSize::SeeExtendedRomSize => println!("{} {}", 16, MB),
+                    RomSize::SeeExtendedRomSize => println!("\t{}: {} {}", ROM_SIZE, 16, MB),
                 }
             }
 
