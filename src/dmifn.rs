@@ -1818,7 +1818,7 @@ pub fn dmi_port_type(port_type_data: &PortInformationPortTypeData) -> String {
         PortInformationPortType::NetworkPort => "Network Port",
         PortInformationPortType::Sata => "SATA",
         PortInformationPortType::Sas => "SAS",
-        PortInformationPortType::Mfdp => " MFDP (Multi-Function Display Port)",
+        PortInformationPortType::Mfdp => "MFDP (Multi-Function Display Port)",
         PortInformationPortType::Thunderbolt => "Thunderbolt",
         PortInformationPortType::Port8251Compatible => "8251 Compatible",
         PortInformationPortType::Port8251FifoCompatible => "8251 FIFO Compatible",
