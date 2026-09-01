@@ -1281,7 +1281,12 @@ pub fn dmi_memory_device_type(memory_type: MemoryDeviceTypeData) -> String {
         MemoryDeviceType::Ddr5 => "DDR5",
         MemoryDeviceType::Lpddr5 => "LPDDR5",
         MemoryDeviceType::Hbm3 => "HBM3",
-        MemoryDeviceType::None => "",
+        // 0x15-0x17 are held in reserve by the specification; the library maps
+        // them to None along with every genuinely undefined value.
+        MemoryDeviceType::None => match memory_type.raw {
+            0x15..=0x17 => "Reserved",
+            _ => "",
+        },
     };
     match print == "" {
         true => OUT_OF_SPEC.to_string(),
