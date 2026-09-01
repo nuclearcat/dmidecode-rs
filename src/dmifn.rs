@@ -86,7 +86,7 @@ pub fn dmi_processor_type(processor_type: ProcessorTypeData) -> String {
         ProcessorType::None => OUT_OF_SPEC.to_string(),
     }
 }
-pub fn dmi_processor_family(processor_family: ProcessorFamily) -> String {
+pub fn dmi_processor_family(processor_family: ProcessorFamily, raw: u16) -> String {
     let print = match processor_family {
         ProcessorFamily::Other => OTHER,
         ProcessorFamily::Unknown => UNKNOWN,
@@ -104,7 +104,7 @@ pub fn dmi_processor_family(processor_family: ProcessorFamily) -> String {
         ProcessorFamily::PentiumprocessorwithMMXtechnology => "Pentium MMX",
         ProcessorFamily::IntelCeleronProcessor => "Celeron",
         ProcessorFamily::PentiumIIXeonProcessor => "Pentium II Xeon",
-        ProcessorFamily::PentiumIIIProcessor => "Pentium II",
+        ProcessorFamily::PentiumIIIProcessor => "Pentium III",
         ProcessorFamily::M1Family => "M1",
         ProcessorFamily::M2Family => "M2",
         ProcessorFamily::IntelCeleronMProcessor => "Celeron M",
@@ -293,7 +293,9 @@ pub fn dmi_processor_family(processor_family: ProcessorFamily) -> String {
         ProcessorFamily::AMDSempronMProcessorFamily => "Sempron M",
         ProcessorFamily::I860 => "i860",
         ProcessorFamily::I960 => "i960",
-        ProcessorFamily::SeeProcessorFamily2 => "See Processor Family #2",
+        // The caller resolves this sentinel against the 16-bit family field;
+        // reaching here means it could not, which dmidecode reports as out of spec.
+        ProcessorFamily::SeeProcessorFamily2 => OUT_OF_SPEC,
         ProcessorFamily::ARMv7 => "ARMv7",
         ProcessorFamily::ARMv8 => "ARMv8",
         ProcessorFamily::ARMv9 => "ARMv9",
@@ -311,37 +313,29 @@ pub fn dmi_processor_family(processor_family: ProcessorFamily) -> String {
         ProcessorFamily::RISCVRV64 => "RV64",
         ProcessorFamily::RISCVRV128 => "RV128",
         ProcessorFamily::LoongArch => "LoongArch",
-        ProcessorFamily::Longsoon1ProcessorFamily => "Loongson 1 Processor Family",
-        ProcessorFamily::Longsoon2ProcessorFamily => "Loongson 2 Processor Family",
-        ProcessorFamily::Longsoon3ProcessorFamily => "Loongson 3 Processor Family",
-        ProcessorFamily::Longsoon2KProcessorFamily => "Loongson 2K Processor Family",
-        ProcessorFamily::Longsoon3AProcessorFamily => "Loongson 3A Processor Family",
-        ProcessorFamily::Longsoon3BProcessorFamily => "Loongson 3B Processor Family",
-        ProcessorFamily::Longsoon3CProcessorFamily => "Loongson 3C Processor Family",
-        ProcessorFamily::Longsoon3DProcessorFamily => "Loongson 3D Processor Family",
-        ProcessorFamily::Longsoon3EProcessorFamily => "Loongson 3E Processor Family",
-        ProcessorFamily::DualCoreLoongson2KProcessor2xxxSeries => {
-            "Dual-Core Loongson 2K Processor 2xxx Series"
-        }
-        ProcessorFamily::QuadCoreLoongson3AProcessor5xxxSeries => {
-            "Quad-Core Loongson 3A Processor 5xxx Series"
-        }
-        ProcessorFamily::MultiCoreLoongson3AProcessor5xxxSeries => {
-            "Multi-Core Loongson 3A Processor 5xxx Series"
-        }
-        ProcessorFamily::QuadCoreLoongson3BProcessor5xxxSeries => {
-            "Quad-Core Loongson 3B Processor 5xxx Series"
-        }
-        ProcessorFamily::MultiCoreLoongson3BProcessor5xxxSeries => {
-            "Multi-Core Loongson 3B Processor 5xxx Series"
-        }
-        ProcessorFamily::MultiCoreLoongson3CProcessor5xxxSeries => {
-            "Multi-Core Loongson 3C Processor 5xxx Series"
-        }
-        ProcessorFamily::MultiCoreLoongson3DProcessor5xxxSeries => {
-            "Multi-Core Loongson 3D Processor 5xxx Series"
-        }
-        ProcessorFamily::None => "",
+        ProcessorFamily::Longsoon1ProcessorFamily => "Loongson 1",
+        ProcessorFamily::Longsoon2ProcessorFamily => "Loongson 2",
+        ProcessorFamily::Longsoon3ProcessorFamily => "Loongson 3",
+        ProcessorFamily::Longsoon2KProcessorFamily => "Loongson 2K",
+        ProcessorFamily::Longsoon3AProcessorFamily => "Loongson 3A",
+        ProcessorFamily::Longsoon3BProcessorFamily => "Loongson 3B",
+        ProcessorFamily::Longsoon3CProcessorFamily => "Loongson 3C",
+        ProcessorFamily::Longsoon3DProcessorFamily => "Loongson 3D",
+        ProcessorFamily::Longsoon3EProcessorFamily => "Loongson 3E",
+        ProcessorFamily::DualCoreLoongson2KProcessor2xxxSeries => "Dual-Core Loongson 2K 2xxx",
+        ProcessorFamily::QuadCoreLoongson3AProcessor5xxxSeries => "Quad-Core Loongson 3A 5xxx",
+        ProcessorFamily::MultiCoreLoongson3AProcessor5xxxSeries => "Multi-Core Loongson 3A 5xxx",
+        ProcessorFamily::QuadCoreLoongson3BProcessor5xxxSeries => "Quad-Core Loongson 3B 5xxx",
+        ProcessorFamily::MultiCoreLoongson3BProcessor5xxxSeries => "Multi-Core Loongson 3B 5xxx",
+        ProcessorFamily::MultiCoreLoongson3CProcessor5xxxSeries => "Multi-Core Loongson 3C 5xxx",
+        ProcessorFamily::MultiCoreLoongson3DProcessor5xxxSeries => "Multi-Core Loongson 3D 5xxx",
+        // Values the library does not map but the specification defines.
+        ProcessorFamily::None => match raw {
+            0x16 => "Intel",
+            0xBE => "Core 2 or K7",
+            0x103 => "ARM",
+            _ => "",
+        },
     };
     match print == "" {
         true => OUT_OF_SPEC.to_string(),
@@ -402,9 +396,7 @@ pub fn dmi_firmware_inventory_state(state: FirmwareInventoryStateInformationData
     }
 }
 
-pub fn dmi_firmware_inventory_characteristics(
-    characteristics: &FirmwareInventoryCharacteristics,
-) {
+pub fn dmi_firmware_inventory_characteristics(characteristics: &FirmwareInventoryCharacteristics) {
     if characteristics.updatable() {
         println!("\t\tUpdatable");
     }
@@ -624,7 +616,7 @@ pub fn dmi_processor_id(data: &SMBiosProcessorInformation<'_>) {
                         sig = 1;
                     } else {
                         println!(
-                            "\tSignature: Type {}, Family {}, Major Stepping {}, Minor Stepping {}",
+                            "\tSignature: Type {}, Family {}, Model {}, Stepping {}",
                             (dx >> 12) & 0x3,
                             (dx >> 8) & 0xF,
                             (dx >> 4) & 0xF,
@@ -648,6 +640,14 @@ pub fn dmi_processor_id(data: &SMBiosProcessorInformation<'_>) {
                     }
 
                     println!("\tSignature: Implementor {:#04x}, Variant {:#x}, Architecture {}, Part {:#05x}, Revision {}", midr >> 24, (midr >> 20) & 0xF, (midr >> 16) & 0xF, (midr >> 4) & 0xFFF, midr & 0xF);
+                    return;
+                }
+                // LoongArch. 0x263-0x26B are unassigned and dmidecode skips them.
+                else if (family.1 >= 0x258 && family.1 <= 0x262)
+                    || (family.1 >= 0x26C && family.1 <= 0x271)
+                {
+                    let identity = u32::from_le_bytes(p[0..=3].try_into().expect("u32 is 4 bytes"));
+                    println!("\tSignature: Processor Identity {:#010x}", identity);
                     return;
                 }
                 // Intel
@@ -1880,11 +1880,9 @@ pub fn dmi_slot_id(slot_id: &SystemSlotId, slot_type: &SystemSlotTypeData) {
         // MCA, EISA, PCI, AGP, PCI-X, PCI Express generations 2 through 6,
         // and the 0xA5-0xC4 block of PCI Express and M.2 variants. 0xB7 is
         // absent from the list, matching dmidecode.
-        0x04..=0x06
-        | 0x0E..=0x13
-        | 0x1F..=0x23
-        | 0xA5..=0xB6
-        | 0xB8..=0xC4 => println!("\tID: {}", slot_id.byte_0()),
+        0x04..=0x06 | 0x0E..=0x13 | 0x1F..=0x23 | 0xA5..=0xB6 | 0xB8..=0xC4 => {
+            println!("\tID: {}", slot_id.byte_0())
+        }
         0x07 => println!(
             "\tID: Adapter {}, Socket {}",
             slot_id.byte_0(),
@@ -2417,9 +2415,7 @@ pub fn dmi_pointing_device_type(device_type: &PointingDeviceTypeData) -> String 
         PointingDeviceType::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -2441,9 +2437,7 @@ pub fn dmi_pointing_device_interface(interface: &PointingDeviceInterfaceData) ->
         PointingDeviceInterface::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -2460,9 +2454,7 @@ pub fn dmi_battery_chemistry(chemistry: &PortableBatteryDeviceChemistryData) -> 
         PortableBatteryDeviceChemistry::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -2773,9 +2765,7 @@ pub fn dmi_management_device_type(device_type: &ManagementDeviceTypeData) -> Str
         ManagementDeviceType::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -2791,9 +2781,7 @@ pub fn dmi_management_device_address_type(
         ManagementDeviceAddressType::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -2806,9 +2794,7 @@ pub fn dmi_memory_channel_type(channel_type: &MemoryChannelTypeData) -> String {
         MemoryChannelType::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -2824,9 +2810,7 @@ pub fn dmi_ipmi_interface_type(interface_type: &IpmiInterfaceTypeData) -> String
         IpmiInterfaceType::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -3186,9 +3170,7 @@ fn dmi_protocol_record_type(protocol_type: &HostProtocolTypeData) -> String {
         HostProtocolType::None => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -3203,9 +3185,7 @@ fn dmi_protocol_assignment_type(assignment_type: u8) -> String {
         _ => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }
@@ -3218,9 +3198,7 @@ fn dmi_address_type(address_type: u8) -> String {
         _ => "",
     };
     match print == "" {
-        true => {
-            OUT_OF_SPEC.to_string()
-        }
+        true => OUT_OF_SPEC.to_string(),
         false => print.to_string(),
     }
 }

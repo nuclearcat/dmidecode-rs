@@ -93,9 +93,7 @@ pub fn dump_undefined_struct(
                     // The legacy field counts 64 kB units. Step it up to MB or
                     // GB the same way dmidecode does rather than reporting a
                     // 32 MB ROM as "32768 kB".
-                    RomSize::Kilobytes(size) => {
-                        dmi_print_memory_size(ROM_SIZE, size as u64, true)
-                    }
+                    RomSize::Kilobytes(size) => dmi_print_memory_size(ROM_SIZE, size as u64, true),
                     // The extended field already carries its own unit.
                     RomSize::Megabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, MB),
                     RomSize::Gigabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, GB),
@@ -567,8 +565,7 @@ pub fn dump_undefined_struct(
                             "External Interface Locked Out".to_string(),
                         ChassisSecurityStatus::ExternalInterfaceEnabled =>
                             "External Interface Enabled".to_string(),
-                        ChassisSecurityStatus::None =>
-                            OUT_OF_SPEC.to_string(),
+                        ChassisSecurityStatus::None => OUT_OF_SPEC.to_string(),
                     }
                 );
             }
@@ -623,10 +620,7 @@ pub fn dump_undefined_struct(
                                         "Processor+I/O Module".to_string()
                                     }
                                     BoardType::InterconnectBoard => "InterconnectBoard".to_string(),
-                                    BoardType::None => {
-                                        OUT_OF_SPEC.to_string()
-                                            .to_string()
-                                    }
+                                    BoardType::None => OUT_OF_SPEC.to_string(),
                                 }
                             }
                             ElementType::SMBiosType(bios_type) => {
@@ -659,19 +653,17 @@ pub fn dump_undefined_struct(
                 println!("\tType: {}", dmi_processor_type(processor_type));
             }
             if let Some(processor_family) = data.processor_family() {
-                if processor_family.value == ProcessorFamily::SeeProcessorFamily2 {
-                    if let Some(processor_family_2) = data.processor_family_2() {
-                        println!(
-                            "\tFamily: {}",
-                            dmi_processor_family(processor_family_2.value)
-                        );
-                    }
-                } else {
-                    println!(
-                        "\tFamily: {}",
-                        dmi_processor_family(processor_family.value)
-                    );
-                }
+                // 0xFE means the real family is in the 16-bit field. If that
+                // field is absent the sentinel itself is looked up, which has
+                // no name, so the line still prints as out of spec.
+                let family = match processor_family.value {
+                    ProcessorFamily::SeeProcessorFamily2 => data
+                        .processor_family_2()
+                        .map(|family_2| (family_2.value, family_2.raw))
+                        .unwrap_or((processor_family.value, processor_family.raw as u16)),
+                    value => (value, processor_family.raw as u16),
+                };
+                println!("\tFamily: {}", dmi_processor_family(family.0, family.1));
             }
             if let Some(processor_manufacturer) =
                 dmidecode_string_val(&data.processor_manufacturer())
@@ -776,7 +768,11 @@ pub fn dump_undefined_struct(
             // defers to the 16-bit companion field, and any other value is the
             // count itself.
             let parts = data.parts();
-            dmi_processor_count("Core Count", parts.get_field_byte(0x23), parts.get_field_word(0x2A));
+            dmi_processor_count(
+                "Core Count",
+                parts.get_field_byte(0x23),
+                parts.get_field_word(0x2A),
+            );
             dmi_processor_count(
                 "Core Enabled",
                 parts.get_field_byte(0x24),
@@ -1367,10 +1363,9 @@ pub fn dump_undefined_struct(
             if let Some(device_set) = data.device_set() {
                 dmi_memory_device_set(device_set);
             }
-            if let Some(device_locator) = dmidecode_string_val_with_index(
-                &data.device_locator(),
-                parts.get_field_byte(0x10),
-            ) {
+            if let Some(device_locator) =
+                dmidecode_string_val_with_index(&data.device_locator(), parts.get_field_byte(0x10))
+            {
                 println!("\tLocator: {}", device_locator);
             }
             if let Some(bank_locator) =
@@ -1399,16 +1394,14 @@ pub fn dump_undefined_struct(
                 ) {
                     println!("\tSerial Number: {}", serial_number);
                 }
-                if let Some(asset_tag) = dmidecode_string_val_with_index(
-                    &data.asset_tag(),
-                    parts.get_field_byte(0x19),
-                ) {
+                if let Some(asset_tag) =
+                    dmidecode_string_val_with_index(&data.asset_tag(), parts.get_field_byte(0x19))
+                {
                     println!("\tAsset Tag: {}", asset_tag)
                 }
-                if let Some(part_number) = dmidecode_string_val_with_index(
-                    &data.part_number(),
-                    parts.get_field_byte(0x1A),
-                ) {
+                if let Some(part_number) =
+                    dmidecode_string_val_with_index(&data.part_number(), parts.get_field_byte(0x1A))
+                {
                     println!("\tPart Number: {}", part_number);
                 }
                 if let Some(attributes) = data.attributes() {
@@ -2125,10 +2118,7 @@ pub fn dump_undefined_struct(
             if let Some(nvstorage_device_address) = data.nvstorage_device_address() {
                 match nvstorage_device_address == u8::MAX {
                     true => println!("\tNV Storage Device: Not Present"),
-                    false => println!(
-                        "\tNV Storage Device Address: {}",
-                        nvstorage_device_address
-                    ),
+                    false => println!("\tNV Storage Device Address: {}", nvstorage_device_address),
                 }
             }
             match (data.interface_type(), data.base_address()) {
@@ -2483,10 +2473,7 @@ pub fn dump_undefined_struct(
             if let Some(lowest_supported_version) =
                 dmidecode_string_val(&data.lowest_supported_firmware_version())
             {
-                println!(
-                    "\tLowest Supported Version: {}",
-                    lowest_supported_version
-                );
+                println!("\tLowest Supported Version: {}", lowest_supported_version);
             }
             if let Some(image_size) = data.image_size() {
                 match image_size {
@@ -2524,8 +2511,7 @@ pub fn dump_undefined_struct(
                     dmi_string_property_id(string_property_id)
                 );
             }
-            if let Some(string_property_value) =
-                dmidecode_string_val(&data.string_property_value())
+            if let Some(string_property_value) = dmidecode_string_val(&data.string_property_value())
             {
                 println!("\tString Property Value: {}", string_property_value);
             }
