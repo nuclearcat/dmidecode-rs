@@ -99,8 +99,8 @@ pub fn dump_undefined_struct(
                     // The extended field already carries its own unit.
                     RomSize::Megabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, MB),
                     RomSize::Gigabytes(size) => println!("\t{}: {} {}", ROM_SIZE, size, GB),
-                    RomSize::Undefined(data) => {
-                        println!("\t{}: {} ({})", ROM_SIZE, OUT_OF_SPEC, data)
+                    RomSize::Undefined(_) => {
+                        println!("\t{}: {}", ROM_SIZE, OUT_OF_SPEC)
                     }
                     // Spec < 3.1.0
                     RomSize::SeeExtendedRomSize => println!("\t{}: {} {}", ROM_SIZE, 16, MB),
@@ -360,7 +360,7 @@ pub fn dump_undefined_struct(
                         println!("AC Power Restored");
                     }
                     SystemWakeUpType::None => {
-                        println!("{} ({})", OUT_OF_SPEC, wakeup_type.raw);
+                        println!("{}", OUT_OF_SPEC);
                     }
                 }
             }
@@ -457,7 +457,7 @@ pub fn dump_undefined_struct(
                         println!("Interconnect Board");
                     }
                     BoardType::None => {
-                        println!("{} ({})", OUT_OF_SPEC, board_type.raw);
+                        println!("{}", OUT_OF_SPEC);
                     }
                 }
             }
@@ -521,7 +521,7 @@ pub fn dump_undefined_struct(
                 };
 
                 if print == "" {
-                    println!("{} ({})", OUT_OF_SPEC, chassis_type.raw);
+                    println!("{}", OUT_OF_SPEC);
                 } else {
                     println!("{}", print);
                 }
@@ -568,7 +568,7 @@ pub fn dump_undefined_struct(
                         ChassisSecurityStatus::ExternalInterfaceEnabled =>
                             "External Interface Enabled".to_string(),
                         ChassisSecurityStatus::None =>
-                            format!("{} ({})", OUT_OF_SPEC, security_status.raw),
+                            OUT_OF_SPEC.to_string(),
                     }
                 );
             }
@@ -624,7 +624,7 @@ pub fn dump_undefined_struct(
                                     }
                                     BoardType::InterconnectBoard => "InterconnectBoard".to_string(),
                                     BoardType::None => {
-                                        format!("{} ({})", OUT_OF_SPEC, baseboard_type.raw)
+                                        OUT_OF_SPEC.to_string()
                                             .to_string()
                                     }
                                 }
@@ -663,13 +663,13 @@ pub fn dump_undefined_struct(
                     if let Some(processor_family_2) = data.processor_family_2() {
                         println!(
                             "\tFamily: {}",
-                            dmi_processor_family(processor_family_2.value, processor_family_2.raw)
+                            dmi_processor_family(processor_family_2.value)
                         );
                     }
                 } else {
                     println!(
                         "\tFamily: {}",
-                        dmi_processor_family(processor_family.value, processor_family.raw as u16)
+                        dmi_processor_family(processor_family.value)
                     );
                 }
             }
@@ -741,7 +741,7 @@ pub fn dump_undefined_struct(
                             CpuStatus::None => "",
                         };
                         match print == "" {
-                            true => println!("{} ({})", OUT_OF_SPEC, status.raw),
+                            true => println!("{}", OUT_OF_SPEC),
                             false => println!("{}", print),
                         }
                     }
