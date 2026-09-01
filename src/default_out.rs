@@ -199,6 +199,9 @@ pub fn dump_undefined_struct(
                 if characteristics.usb_legacy_is_supported() {
                     println!("\t\tUSB legacy is supported");
                 }
+                if characteristics.agp_is_supported() {
+                    println!("\t\tAGP is supported");
+                }
                 if characteristics.i2oboot_is_supported() {
                     println!("\t\tI2O boot is supported");
                 }
@@ -231,6 +234,12 @@ pub fn dump_undefined_struct(
                 }
                 if characteristics.smbios_table_describes_avirtual_machine() {
                     println!("\t\tSystem is a virtual machine");
+                }
+                if characteristics.manufacturing_mode_is_supported() {
+                    println!("\t\tManufacturing mode is supported");
+                }
+                if characteristics.manufacturing_mode_is_enabled() {
+                    println!("\t\tManufacturing mode is enabled");
                 }
             }
 
