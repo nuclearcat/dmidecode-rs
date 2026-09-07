@@ -1,0 +1,26 @@
+[
+  {
+    "file": "netac-16gb.txt",
+    "source": "https://github.com/nuclearcat/dmidecode-rs/issues/2",
+    "contributor": "pavel-odintsov",
+    "retrieved": "2026-09-07",
+    "format": "decoded text; not a binary SMBIOS dump",
+    "sha256": "c7e4412f76d3ef934805159dff3aed4f339f0097478d834e8506c215fd0de748"
+  },
+  {
+    "file": "kingston-32gb.txt",
+    "source": "https://github.com/nuclearcat/dmidecode-rs/issues/2#issuecomment-5570518342",
+    "contributor": "pavel-odintsov",
+    "retrieved": "2026-09-07",
+    "format": "decoded text; not a binary SMBIOS dump",
+    "sha256": "611ebc20787a36ad1690f676fe06692bee2712047f315ccaaf3317bd32ba6882"
+  },
+  {
+    "file": "ramaxel-32gb.txt",
+    "source": "https://github.com/nuclearcat/dmidecode-rs/issues/2#issuecomment-5570589964",
+    "contributor": "pavel-odintsov",
+    "retrieved": "2026-09-07",
+    "format": "decoded text; not a binary SMBIOS dump",
+    "sha256": "936249ec569729f2207ea94d5dfbe50173c924126a21095598027594843bc252"
+  }
+]
