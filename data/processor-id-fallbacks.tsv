@@ -1,0 +1,21 @@
+# ID encoding\tCPU version prefix (case sensitive, followed by whitespace or end)
+intel	Pentium III MMX
+intel	Intel(R) Core(TM)2
+intel	Intel(R) Pentium(R)
+intel	Genuine Intel(R) CPU U1400
+intel	Intel(R) Core(TM)
+intel	Intel(R) Xeon(R)
+intel	Intel(R) Celeron(R)
+intel	Intel(R) Atom(TM)
+intel	Intel(R) N50
+intel	Intel(R) N95
+intel	Intel(R) N97
+intel	Intel(R) N100
+intel	Intel(R) N150
+intel	Intel(R) N200
+intel	Intel(R) N250
+amd	AMD Athlon(TM)
+amd	AMD Opteron(tm)
+amd	Dual-Core AMD Opteron(tm)
+amd	AMD Ryzen
+amd	AMD EPYC

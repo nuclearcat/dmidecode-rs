@@ -29,8 +29,8 @@ and SHA-256 hashes of these extracted files.
   gives `0x000B06E0`: family 6, model 190 (`0xBE`), stepping 0. Linux identifies
   [family 6/model 0xBE as Gracemont / Alder Lake N](https://github.com/torvalds/linux/blob/master/arch/x86/include/asm/intel-family.h).
   This is a shared model identifier, not a unique N150 product identifier.
-  The current decoder's fallback for `Other`/`Unknown` CPU families does not
-  recognize this version string, leaving signature and flags undecoded.
+  The captured decoder left signature and flags undecoded for this version
+  string. The fallback rules in `data/processor-id-fallbacks.tsv` now recognize it.
 - Default identity strings, the patterned system UUID and sensor thresholds
   numbered 1 through 6 suggest firmware template data. Connector and sensor
   records need independent confirmation.

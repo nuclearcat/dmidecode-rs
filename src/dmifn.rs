@@ -572,6 +572,27 @@ pub fn dmi_processor_characteristics(characteristics: ProcessorCharacteristics) 
         }
     }
 }
+// Only selects the ID encoding; the firmware's Family value remains unchanged.
+// Rules and provenance: data/processor-id-fallbacks.tsv and data/README.md.
+fn processor_id_fallback(version: &str) -> Option<u8> {
+    let version = version.trim();
+    include_str!("../data/processor-id-fallbacks.tsv")
+        .lines()
+        .filter(|line| !line.starts_with('#') && !line.is_empty())
+        .find_map(|line| {
+            let (encoding, prefix) = line.split_once('\t')?;
+            let suffix = version.strip_prefix(prefix)?;
+            if !suffix.is_empty() && !suffix.starts_with(char::is_whitespace) {
+                return None;
+            }
+            match encoding {
+                "intel" => Some(1),
+                "amd" => Some(2),
+                _ => None,
+            }
+        })
+}
+
 pub fn dmi_processor_id(data: &SMBiosProcessorInformation<'_>) {
     if let Some(p) = data.processor_id() {
         println!(
@@ -579,19 +600,18 @@ pub fn dmi_processor_id(data: &SMBiosProcessorInformation<'_>) {
             p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]
         );
 
-        let option_family = match (data.processor_family(), data.processor_family_2()) {
-            (Some(processor_family), None) => {
-                Some((processor_family.value, processor_family.raw as u16))
+        let option_family = data.processor_family().and_then(|family| {
+            if family.raw == 0xFE {
+                data.processor_family_2()
+                    .map(|extended| (extended.value, extended.raw))
+            } else {
+                Some((family.value, family.raw as u16))
             }
-            (Some(_), Some(processor_family_2)) => {
-                Some((processor_family_2.value, processor_family_2.raw))
-            }
-            _ => None,
-        };
+        });
 
         match option_family {
             Some(family) => {
-                let mut sig = 0;
+                let sig;
 
                 if family.0 == ProcessorFamily::Intel386Processor {
                     let dx = u16::from_le_bytes(p[0..=1].try_into().expect("u16 is 2 bytes"));
@@ -679,32 +699,14 @@ pub fn dmi_processor_id(data: &SMBiosProcessorInformation<'_>) {
                 // support the CPUID instruction.
                 else if family.0 == ProcessorFamily::Other || family.0 == ProcessorFamily::Unknown
                 {
-                    if let Some(version) = data.processor_version().to_utf8_lossy() {
-                        match version.as_str() {
-                            "Pentium III MMX" => {
-                                sig = 1;
-                            }
-                            "Intel(R) Core(TM)2" => {
-                                sig = 1;
-                            }
-                            "Intel(R) Pentium(R)" => {
-                                sig = 1;
-                            }
-                            "Genuine Intel(R) CPU U1400" => {
-                                sig = 1;
-                            }
-                            "AMD Athlon(TM)" => {
-                                sig = 2;
-                            }
-                            "AMD Opteron(tm)" => {
-                                sig = 2;
-                            }
-                            "Dual-Core AMD Opteron(tm)" => {
-                                sig = 2;
-                            }
-                            _ => return,
-                        }
-                    }
+                    sig = match data
+                        .processor_version()
+                        .to_utf8_lossy()
+                        .and_then(|version| processor_id_fallback(&version))
+                    {
+                        Some(sig) => sig,
+                        None => return,
+                    };
                 } else {
                     // neither X86 nor ARM
                     return;
