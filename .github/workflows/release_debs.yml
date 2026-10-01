@@ -22,8 +22,6 @@ jobs:
         include:
           - distribution: ubuntu-24.04
             image: ubuntu:24.04
-          - distribution: ubuntu-25.10
-            image: ubuntu:25.10
           - distribution: ubuntu-26.04
             image: ubuntu:26.04
           - distribution: debian-trixie
@@ -100,7 +98,9 @@ jobs:
 
   attach-to-release:
     name: Attach .deb packages to release
-    if: github.event_name == 'release'
+    # Run even if one distribution leg failed so the remaining packages still
+    # reach the release; the failed leg stays visible as a red matrix job.
+    if: ${{ !cancelled() && github.event_name == 'release' }}
     needs: build-deb
     runs-on: ubuntu-latest
     permissions:
